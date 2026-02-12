@@ -14,28 +14,23 @@ function MainPage({ properties }: { properties: Listing[] }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedBedrooms, setSelectedBedrooms] = useState<number[]>([])
     const [selectedDateRanges, setSelectedDateRanges] = useState<string[]>([])
-    const [listings, setListings] = useState<Listing[]>([])
     const [filteredListings, setFilteredListings] = useState<Listing[]>([])
 
     const handleSearch = () => {
         // Search is already handled by useEffect
-        console.log('Searching with filters:', {
-            searchQuery,
-            selectedBedrooms,
-            selectedDateRanges
-        })
     }
 
     // Get unique locations from listings
-    const locations = Array.from(
-        new Set(
-            properties
-                .map(l => l.address?.split(',').pop()?.trim())
-                .filter(Boolean)
-        )
-    ).sort()
+    // const locations = Array.from(
+    //     new Set(
+    //         properties
+    //             .map(l => l.address?.split(',').pop()?.trim())
+    //             .filter(Boolean)
+    //     )
+    // ).sort()
 
     // Get unique bedroom counts
+    
     const bedroomOptions = Array.from(
         new Set(properties.map(l => l.bedrooms).filter(b => b !== null))
     ).sort((a, b) => (a || 0) - (b || 0))
