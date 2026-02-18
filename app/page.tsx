@@ -5,16 +5,22 @@ import ProtectedRoute from "./auth/protected-route";
 
 
 export default async function Home() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/listing`, {
-    // next: { revalidate: 86400 }, // Revalidate every 24 hours (86400 seconds)
-  });
-  const data = await res.json();
+  // const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/listing`, {
+  //   // next: { revalidate: 86400 }, // Revalidate every 24 hours (86400 seconds)
+  // });
+  const urls = [
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/listing`,
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/realestate-listing`
+  ]
+  const responses = await Promise.all(urls.map(url => fetch(url)));
+  const data = await Promise.all(responses.map(response => response.json()));
+  const dataMerge = [ ...data[0].listings, ...data[1].listings ]
   return (
     <ProtectedRoute>
       <>
         <Header />
         <main className="container mx-auto lg:w-3/5">
-          <MainPage properties={data.listings} />
+          <MainPage properties={dataMerge} />
         </main>
       </>
     </ProtectedRoute>
