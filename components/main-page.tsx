@@ -36,21 +36,64 @@ function MainPage({ properties }: { properties: Listing[] }) {
     ).sort((a, b) => (a || 0) - (b || 0))
 
     // Date range helper
-    const getDateRange = (dateString: string | null): string => {
-        if (!dateString) return 'Unknown'
-
-        const listedDate = new Date(dateString)
-        const today = new Date()
-        const diffTime = today.getTime() - listedDate.getTime()
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-        if (diffDays <= 1) return 'Today'
-        if (diffDays <= 7) return 'This week'
-        if (diffDays <= 30) return 'This month'
-        return 'Older'
+  const getDateRange = (dateString: string | null): string => {
+    if (!dateString) return 'Unknown'
+    
+    const lowerDate = dateString.toLowerCase()
+    
+    // Handle "Listed Today"
+    if (lowerDate.includes('today')) {
+      return 'Today'
     }
+    
+    // Handle "Listed Yesterday"
+    if (lowerDate.includes('yesterday')) {
+      return 'Yesterday'
+    }
+    
+    // Handle specific dates like "Listed Fri, 24 Oct"
+    // Parse the date and compare
+    try {
+      // Remove "Listed " prefix if present
+      const cleanDate = dateString.replace(/^Listed\s+/i, '').trim()
+      
+      // Try to parse dates like "Fri, 24 Oct" or "24 Oct"
+      const currentYear = new Date().getFullYear()
+      const datePattern = /(?:\w+,?\s+)?(\d+)\s+(\w+)(?:\s+(\d{4}))?/
+      const match = cleanDate.match(datePattern)
+      
+      if (match) {
+        const day = parseInt(match[1])
+        const monthStr = match[2]
+        const year = match[3] ? parseInt(match[3]) : currentYear
+        
+        // Convert month abbreviation to number
+        const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+        const monthIndex = months.findIndex(m => monthStr.toLowerCase().startsWith(m))
+        
+        if (monthIndex !== -1) {
+          const listedDate = new Date(year, monthIndex, day)
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          
+          const diffTime = today.getTime() - listedDate.getTime()
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+          
+          if (diffDays === 0) return 'Today'
+          if (diffDays === 1) return 'Yesterday'
+          if (diffDays <= 7) return 'This week'
+          if (diffDays <= 30) return 'This month'
+          return 'Older than a month'
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing date:', dateString, error)
+    }
+    
+    return 'Unknown'
+  }
 
-    const dateRangeOptions = ['Today', 'This week', 'This month', 'Older']
+  const dateRangeOptions = ['Today', 'Yesterday', 'This week', 'This month', 'Older than a month']
     // Apply filters
     useEffect(() => {
         let filtered = [...properties]
@@ -102,8 +145,6 @@ function MainPage({ properties }: { properties: Listing[] }) {
         setSelectedBedrooms([])
         setSelectedDateRanges([])
     }
-
-    console.log(filteredListings)
     return (
         <div className="px-4 py-16 flex flex-col gap-8">
             <section className="flex justify-between">
