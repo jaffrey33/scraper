@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
         hostname: 'firebasestorage.googleapis.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'mediaserver.realestate.co.nz',
+        pathname: '/**',
+      }
     ],
   },
 };
