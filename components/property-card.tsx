@@ -7,19 +7,25 @@ import {
     CardHeader,
 } from "@/components/ui/card"
 import { Badge } from "./ui/badge"
-import { Calendar, ChevronLeft, ChevronRight, House,  User } from "lucide-react"
+import { ChevronLeft, ChevronRight, House, Mail, Phone, User } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import { Listing } from "@/types/data-types"
-function PropertyCard({property} : {property : Listing}) {
+function PropertyCard({ property }: { property: Listing }) {
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
     const nextPhoto = () => {
-        // setCurrentPhotoIndex((prev) => (prev + 1) % property.photos.length);
+        const total = property.photos?.length ?? 0;
+        if (!total) return;
+
+        setCurrentPhotoIndex((prev) => (prev + 1) % total);
     };
 
     const prevPhoto = () => {
-        // setCurrentPhotoIndex((prev) => (prev - 1 + property.photos.length) % property.photos.length);
+        const total = property.photos?.length ?? 0;
+        if (!total) return;
+
+        setCurrentPhotoIndex((prev) => (prev - 1 + total) % total);
     };
     return (
         <Card className="pt-0">
@@ -27,12 +33,19 @@ function PropertyCard({property} : {property : Listing}) {
                 {/* Photo Carousel */}
                 <div className="relative w-full h-64 bg-muted">
                     <Image
-                        src={`${property.imageURL}`}
+                        src={property.scrapeFrom == 'trademe.co.nz' ? '/tm-logo-2025-v2.svg' : '/re-logo-2022-light.svg'}
+                        width={100}
+                        height={100}
+                        alt="property-logo"
+                        className="absolute bottom-2 left-2 w-32 z-20 "
+                    />
+                    <Image
+                        src={`${property.photos ? property.photos[currentPhotoIndex] : property.imageURL || 'https://placehold.net/building.svg'}`}
                         fill
                         alt='property-photo'
                         className="w-full h-full object-cover"
                     />
-                    {/* {property.photos.length > 1 && (
+                    {property?.photos != null && property.photos.length > 1 && (
                         <>
                             <button
                                 onClick={prevPhoto}
@@ -52,26 +65,8 @@ function PropertyCard({property} : {property : Listing}) {
                                 {currentPhotoIndex + 1} / {property.photos.length}
                             </div>
                         </>
-                    )} */}
-                       <>
-                            <button
-                                onClick={prevPhoto}
-                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition"
-                                aria-label="Previous photo"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={nextPhoto}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition"
-                                aria-label="Next photo"
-                            >
-                                <ChevronRight className="w-4 h-4" />
-                            </button>
-                            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                                {currentPhotoIndex + 1} / {5}
-                            </div>
-                        </>
+                    )}
+
                 </div>
             </CardHeader>
             <CardContent>
@@ -79,11 +74,11 @@ function PropertyCard({property} : {property : Listing}) {
                     <div className="flex justify-between items-center">
                         <h3 className="text-xl font-semibold">{property.address}</h3>
                         <Badge className="shrink-0">
-                           {property.propertyType}
+                            {property.propertyType}
                         </Badge>
                     </div>
                     <CardDescription className="mb-4 mt-2 line-clamp-2">{property.description}</CardDescription>
-            
+
                     <div className="flex gap-3 text-sm">
                         <div className="flex items-center gap-1">
                             <House className="h-4 w-4" />
@@ -98,10 +93,6 @@ function PropertyCard({property} : {property : Listing}) {
                 <section className=" border-b ">
                     <h3 className="text-2xl font-bold  mb-4">${property.rent_per_week}/mo</h3>
                     <CardDescription className="mb-4">
-                        <div className="flex gap-1 items-center">
-                            <Calendar className="h-4 w-4" />
-                            <p><span className="font-black">12</span> days on market</p>
-                        </div>
                         <p>{property.date_listed}</p>
                     </CardDescription>
                 </section>
@@ -114,14 +105,14 @@ function PropertyCard({property} : {property : Listing}) {
                             <User className="h-4 w-4 text-muted-foreground" />
                             <p> {property.agent || 'N/A'}</p>
                         </div>
-                        {/* <div className="flex gap-1 items-center">
+                        {property.agentNumber && <div className="flex gap-1 items-center">
                             <Phone className="h-4 w-4 text-muted-foreground" />
-                            <p> 22-2233-32</p>
-                        </div>
-                        <div className="flex gap-1 items-center">
+                            <p> {property.agentNumber}</p>
+                        </div>}
+                        {property.agentEmail && <div className="flex gap-1 items-center">
                             <Mail className="h-4 w-4 text-muted-foreground" />
-                            <p>john.doe@realestate.come</p>
-                        </div> */}
+                            <p>{property.agentEmail}</p>
+                        </div>}
                     </div>
                 </section>
             </CardFooter>
