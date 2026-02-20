@@ -196,84 +196,163 @@ async function scrapeListings(): Promise<Listing[]> {
     { timeout: 30000 }
   )
 
+  // const listingLinks = await page.$$eval(
+  //   "tm-property-search-card-listing-title",
+  //   titles => {
+  //     return titles.map(t => {
+  //       const card =
+  //         t.closest("tm-property-search-card") ||
+  //         t.closest("article") ||
+  //         t.parentElement
+
+  //       let siteURL = null;
+
+  //       const premiumLink = card?.querySelector("a.tm-property-premium-listing-card__link");
+  //       const normalLink = card?.querySelector("a.tm-property-search-card__link");
+
+  //       if (premiumLink) {
+  //         siteURL = premiumLink.getAttribute("href");
+  //       } else if (normalLink) {
+  //         siteURL = normalLink.getAttribute("href");
+  //       }
+  //       const address =
+  //         t.textContent?.trim() || null
+  //       const imageURL =
+  //         card
+  //           ?.querySelector("img.tm-progressive-image-loader__full")
+  //           ?.getAttribute("src") || null
+  //       const price =
+  //         card
+  //           ?.querySelector("tm-property-search-card-price-attribute")
+  //           ?.textContent
+  //           ?.trim() || null
+
+  //       const agent =
+  //         card
+  //           ?.querySelector("tm-property-search-card-agents-name")
+  //           ?.textContent
+  //           ?.trim() || null
+
+  //       const listedDate =
+  //         card
+  //           ?.querySelector("tm-property-search-card-listed-date")
+  //           ?.textContent
+  //           ?.trim() || null
+  //       const metrics = Array.from(
+  //         card?.querySelectorAll(
+  //           "li.tm-property-search-card-attribute-icons__metric"
+  //         ) || []
+  //       )
+
+  //       let bedrooms = null
+  //       let bathrooms = null
+
+  //       for (const li of metrics) {
+  //         const type =
+  //           li.querySelector("tg-icon")?.getAttribute("alt")?.toLowerCase()
+
+  //         const valueText =
+  //           li
+  //             .querySelector(
+  //               ".tm-property-search-card-attribute-icons__metric-value"
+  //             )
+  //             ?.textContent
+  //             ?.trim()
+
+  //         const value = valueText ? Number(valueText) : null
+
+  //         if (type?.includes("bed")) bedrooms = value
+  //         if (type?.includes("bath")) bathrooms = value
+  //       }
+
+  //       return {
+  //         imageURL,
+  //         siteURL,
+  //         address,
+  //         rent_per_week: price
+  //           ? Number(price.replace(/[^\d]/g, ""))
+  //           : null,
+  //         agent,
+  //         photos: imageURL ? [imageURL] : null,
+  //         date_listed: listedDate,
+  //         bedrooms,
+  //         bathrooms
+  //       }
+  //     })
+  //   }
+  // )
   const listingLinks = await page.$$eval(
-    "tm-property-search-card-listing-title",
-    titles => {
-      return titles.map(t => {
-        const card =
-          t.closest("tm-property-search-card") ||
-          t.closest("article") ||
-          t.parentElement
+  "tm-property-search-card-listing-title",
+  titles => {
+    return titles.map(t => {
+      const card =
+        t.closest("tm-property-search-card") ||
+        t.closest("tm-property-premium-listing-card") ||
+        t.closest("article") ||
+        t.parentElement
 
-        const siteURL =
-          card
-            ?.querySelector("a.tm-property-search-card__link")
-            ?.getAttribute("href") || null
-        const address =
-          t.textContent?.trim() || null
-        const imageURL =
-          card
-            ?.querySelector("img.tm-progressive-image-loader__full")
-            ?.getAttribute("src") || null
-        const price =
-          card
-            ?.querySelector("tm-property-search-card-price-attribute")
-            ?.textContent
-            ?.trim() || null
+      let siteURL = null;
 
-        const agent =
-          card
-            ?.querySelector("tm-property-search-card-agents-name")
-            ?.textContent
-            ?.trim() || null
+      // Check for premium listing link first
+      const premiumLink = card?.querySelector("a.tm-property-premium-listing-card__link");
+      const normalLink = card?.querySelector("a.tm-property-search-card__link");
 
-        const listedDate =
-          card
-            ?.querySelector("tm-property-search-card-listed-date")
-            ?.textContent
-            ?.trim() || null
-        const metrics = Array.from(
-          card?.querySelectorAll(
-            "li.tm-property-search-card-attribute-icons__metric"
-          ) || []
-        )
+      if (premiumLink) {
+        siteURL = premiumLink.getAttribute("href");
+      } else if (normalLink) {
+        siteURL = normalLink.getAttribute("href");
+      }
 
-        let bedrooms = null
-        let bathrooms = null
+      const address = t.textContent?.trim() || null
+      
+      const imageURL =
+        card?.querySelector("img.tm-progressive-image-loader__full")?.getAttribute("src") || null
+      
+      const price =
+        card?.querySelector("tm-property-search-card-price-attribute")?.textContent?.trim() || null
 
-        for (const li of metrics) {
-          const type =
-            li.querySelector("tg-icon")?.getAttribute("alt")?.toLowerCase()
+      const agent =
+        card?.querySelector("tm-property-search-card-agents-name")?.textContent?.trim() || null
 
-          const valueText =
-            li
-              .querySelector(
-                ".tm-property-search-card-attribute-icons__metric-value"
-              )
-              ?.textContent
-              ?.trim()
+      const listedDate =
+        card?.querySelector("tm-property-search-card-listed-date")?.textContent?.trim() || null
+      
+      const metrics = Array.from(
+        card?.querySelectorAll(
+          "li.tm-property-search-card-attribute-icons__metric"
+        ) || []
+      )
 
-          const value = valueText ? Number(valueText) : null
+      let bedrooms = null
+      let bathrooms = null
 
-          if (type?.includes("bed")) bedrooms = value
-          if (type?.includes("bath")) bathrooms = value
-        }
+      for (const li of metrics) {
+        const type =
+          li.querySelector("tg-icon")?.getAttribute("alt")?.toLowerCase()
 
-        return {
-          imageURL,
-          siteURL,
-          address,
-          rent_per_week: price
-            ? Number(price.replace(/[^\d]/g, ""))
-            : null,
-          agent,
-          date_listed: listedDate,
-          bedrooms,
-          bathrooms
-        }
-      })
-    }
-  )
+        const valueText =
+          li.querySelector(".tm-property-search-card-attribute-icons__metric-value")?.textContent?.trim()
+
+        const value = valueText ? Number(valueText) : null
+
+        if (type?.includes("bed")) bedrooms = value
+        if (type?.includes("bath")) bathrooms = value
+      }
+
+      return {
+        imageURL,
+        siteURL,
+        address,
+        rent_per_week: price ? Number(price.replace(/[^\d]/g, "")) : null,
+        agent,
+        photos: imageURL ? [imageURL] : null,
+        date_listed: listedDate,
+        bedrooms,
+        bathrooms
+      }
+    })
+  }
+)
 
   const detailedData: Listing[] = []
 
@@ -283,9 +362,11 @@ async function scrapeListings(): Promise<Listing[]> {
         ...listing,
         description: null,
         propertyType: null,
-        photos: null,
+        scrapeFrom: "trademe.co.nz",
         scrapedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
+        agentEmail: null,
+        agentNumber: null
       })
       continue
     }
@@ -338,6 +419,7 @@ async function scrapeListings(): Promise<Listing[]> {
       detailedData.push({
         ...listing,
         ...listingDetails,
+        scrapeFrom: "trademe.co.nz",
         scrapedAt: new Date().toISOString(),
         lastUpdated: new Date().toISOString()
       } as Listing)
@@ -350,8 +432,11 @@ async function scrapeListings(): Promise<Listing[]> {
         description: null,
         propertyType: null,
         photos: null,
+        scrapeFrom: "trademe.co.nz",
         scrapedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
+        agentEmail: null,
+        agentNumber: null
       })
     }
   }
@@ -371,7 +456,7 @@ export async function GET(request: Request) {
     const listings = await scrapeListings()
 
     // Delete batch
-    const existingListings = await db.collection('property_listings').get()
+    const existingListings = await db.collection('trademe_property_listings').get()
     const deleteBatch = db.batch()
     existingListings.docs.forEach(doc => {
       deleteBatch.delete(doc.ref)
@@ -380,7 +465,7 @@ export async function GET(request: Request) {
 
     // Save to Firestore
     const batch = db.batch()
-    const collectionRef = db.collection('property_listings')
+    const collectionRef = db.collection('trademe_property_listings')
 
     for (const listing of listings) {
       // Use siteURL as document ID (cleaned)
