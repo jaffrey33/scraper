@@ -16,11 +16,10 @@ export async function GET() {
     }))
 
 
-
     return NextResponse.json({
       listings,
       metadata,
-      count:listings.length
+      count: listings.length
     })
   } catch {
     return NextResponse.json({
@@ -41,9 +40,11 @@ export async function POST(request: Request) {
       bedrooms: body.bedrooms != null ? Number(body.bedrooms) : null,
       bathrooms: body.bathrooms != null ? Number(body.bathrooms) : null,
       rent_per_week: body.rent_per_week != null ? Number(body.rent_per_week) : null,
-      agent: body.agent ?? null,
-      agentNumber: body.agentNumber ?? null,
-      agentEmail: body.agentEmail ?? null,
+      agent: {
+        agentName: body.agent ?? null,
+        agentNumber: body.agentNumber ?? null,
+        agentEmail: body.agentEmail ?? null
+      },
       description: body.description ?? null,
       propertyType: body.propertyType ?? null,
       imageURL: body.imageURL ?? null,
