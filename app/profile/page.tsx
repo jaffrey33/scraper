@@ -23,8 +23,6 @@ import ChangePasswordModal from "./change-password";
 
 type ModalType = "name" | "password" | "photo" | null;
 
-
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getInitials(name: string | null): string {
@@ -35,8 +33,6 @@ function getInitials(name: string | null): string {
         .join("")
         .toUpperCase();
 }
-
-
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -295,6 +291,7 @@ export default function PropertyUserProfile() {
                 <EditNameModal
                     name={user?.displayName ?? null}
                     onSave={(name: string) => {
+                        if (!user) return;
                         updateProfile(user, {
                             displayName: name,
                         }).then(() => {
