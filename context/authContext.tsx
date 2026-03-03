@@ -72,8 +72,7 @@ export const AuthContextProvider = ({
       await sendPasswordResetEmail(auth, email)
     //   success("Success! Please check your email for the reset request.")
     } catch (err: unknown) {
-      const firebaseError = err as { code?: string }
-    //   error(getErrorMessage(firebaseError.code || 'Error sending reset password email. Please try again'))
+      //   error(getErrorMessage(firebaseError.code || 'Error sending reset password email. Please try again'))
       throw err
     }
   }

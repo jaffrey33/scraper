@@ -64,7 +64,7 @@ export default function ChangePasswordModal({ onClose }: ChangePasswordModalProp
                             Change Password
                         </h3>
                         <p className="text-sm text-slate-500 mb-4">
-                            Choose a strong password you don't use elsewhere.
+                            Choose a strong password you don&apos;t use elsewhere.
                         </p>
                         {error && (
                             <Alert className="mb-3 border-red-200 bg-red-50 text-red-700 py-2">

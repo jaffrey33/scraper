@@ -11,11 +11,11 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+// import { Alert, AlertDescription } from "@/components/ui/alert";
 import Header from "@/components/header";
 import { useAuth } from "@/context/authContext";
 import { Camera, ChevronLeft, LogOut } from "lucide-react";
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from "firebase/auth";
+import { updateProfile } from "firebase/auth";
 import { sileo } from "sileo";
 import { useRouter } from "next/navigation";
 import Link from "next/link";

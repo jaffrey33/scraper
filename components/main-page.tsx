@@ -5,7 +5,7 @@ import PropertyCard from "./property-card"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Listing } from "@/types/data-types"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import {
     Pagination,
@@ -26,7 +26,6 @@ function MainPage({ properties }: { properties: Listing[] }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedBedrooms, setSelectedBedrooms] = useState<number[]>([])
     const [selectedDateRanges, setSelectedDateRanges] = useState<string[]>([])
-    const [filteredListings, setFilteredListings] = useState<Listing[]>([])
     const [selectedFrom, setSelectedFrom] = useState<ScrapeFrom | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
     const handleSearch = () => {
@@ -53,8 +52,8 @@ function MainPage({ properties }: { properties: Listing[] }) {
         new Set(properties.map(l => l.date_listed).filter(Boolean))
     ).sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime()) as string[]
 
-    // Apply filters
-    useEffect(() => {
+    // Apply filters (derived state)
+    const filteredListings = useMemo(() => {
         let filtered = [...properties]
 
         // Search filter
@@ -84,10 +83,8 @@ function MainPage({ properties }: { properties: Listing[] }) {
             );
         }
 
-
-        setFilteredListings(filtered)
-        setCurrentPage(1)
-    }, [searchQuery, selectedBedrooms, selectedDateRanges, properties, selectedFrom])
+        return filtered
+    }, [properties, searchQuery, selectedBedrooms, selectedDateRanges, selectedFrom])
 
     const totalPages = Math.max(1, Math.ceil(filteredListings.length / ITEMS_PER_PAGE))
     const paginatedListings = useMemo(() => {
