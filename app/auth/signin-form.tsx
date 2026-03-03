@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { useAuth } from "@/context/authContext"
 import Link from "next/link"
 import { useState } from "react"
+import { sileo } from "sileo"
 
 function SignIn() {
     const { login, loading } = useAuth()
@@ -14,12 +15,21 @@ function SignIn() {
     const [password, setPassword] = useState<string>("")
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        try {
-            await login(email, password)
-        } catch (error) {
-            console.log(error)
-        }
+        sileo.promise(login(email, password), {
+            loading: { title: "Loading..." },
+            success: {
+                title: "Login Successfully",
+                fill: "black",
+                styles: {
+                    title: "text-white!",
+                    description: "text-white/75!",
+                },
+            },
+            error: { title: "Invalid email or password" },
+
+        });
     }
+
     return (
         <Card className="lg:w-1/4 md:w-1/2 w-full m-4">
             <CardHeader className="text-center">
