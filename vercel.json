@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/scrape", 
+      "schedule": "* /5 * * * *"
+    },
+    {
+      "path": "/api/realestate-scrape", 
+      "schedule": "* /5 * * * *"
+    }
+  ]
+}
