@@ -12,7 +12,10 @@ export interface Listing {
   scrapedAt: string
   lastUpdated: string
   scrapeFrom: 'trademe.co.nz' | 'realestate.co.nz'
-  agent: string | null
-  agentEmail: string | null
-  agentNumber: number | null
+  agent: {
+    agentName: string | null
+    agentEmail: string | null
+    agentNumber: number | null
+  }
+
 }
