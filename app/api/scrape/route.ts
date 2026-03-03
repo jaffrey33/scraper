@@ -117,16 +117,15 @@ async function scrapeTrademeListings(page: any): Promise<Listing[]> {
     return results
   })
 
+  
   // Deduplicate by siteURL
   const uniqueListings = listingLinks.filter(
-    (listing: Listing, index, self) =>
+    (listing: Listing, index: number, self: Listing[]) =>
       listing.siteURL &&
-      index === self.findIndex(
+      index === self?.findIndex(
         (l: Listing) => l.siteURL === listing.siteURL
       )
   )
-
-  console.log(`Found ${uniqueListings.length} unique listings`)
 
   // Fetch detail pages
   const detailedData: Listing[] = []
