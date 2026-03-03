@@ -5,362 +5,202 @@ import { Listing } from "@/types/data-types"
 import { NextResponse } from "next/server"
 import { chromium } from "playwright"
 
-// async function scrapeRealEstateListings(page: any): Promise<Listing[]> {
-//     await page.goto(
-//         "https://www.realestate.co.nz/residential/rental/central-north-island/ruapehu",
-//         { waitUntil: "domcontentloaded" }
-//     )
-
-//     // Wait for initial listings to load
-//     try {
-//         await page.waitForSelector('article.listing-tile, div[data-test="tile"], .property-list-item', { timeout: 30000 })
-//     } catch (error) {
-//         console.error('No listings found on RealEstate.co.nz')
-//         return []
-//     }
-
-//     // Scroll to load all listings (handle infinite scroll)
-//     let previousHeight = 0
-//     let scrollAttempts = 0
-//     const maxScrollAttempts = 10
-
-//     while (scrollAttempts < maxScrollAttempts) {
-//         // Get current scroll height
-//         const currentHeight = await page.evaluate(() => document.body.scrollHeight)
-
-//         if (currentHeight === previousHeight) {
-//             // No more content loaded, break
-//             break
-//         }
-
-//         // Scroll to bottom
-//         await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-
-//         // Wait for new content to load
-//         await page.waitForTimeout(2000)
-
-//         previousHeight = currentHeight
-//         scrollAttempts++
-
-//         console.log(`RealEstate scroll attempt ${scrollAttempts}, height: ${currentHeight}`)
-//     }
-
-//     // Scroll back to top
-//     await page.evaluate(() => window.scrollTo(0, 0))
-//     await page.waitForTimeout(1000)
-
-//     const listingLinks = await page.$$eval(
-//         '.tile, div[data-test="tile"]',
-//         (cards: any[]) => {
-//             return cards.map(card => {
-//                 const link = card.querySelector('a[href*="/rental/"]')
-//                 const siteURL = link?.getAttribute('href') || null
-
-//                 const address =
-//                     card.querySelector('.listing-tile__title, [data-testid="search-card-title"]')?.textContent?.trim() ||
-//                     card.querySelector('h2, h3')?.textContent?.trim() ||
-//                     null
-
-//                 const imageURL =
-//                     card.querySelector('img')?.getAttribute('src') ||
-//                     card.querySelector('img')?.getAttribute('data-src') ||
-//                     null
-
-//                 const priceElement =
-//                     card.querySelector('.listing-tile__price, [data-testid="search-card-price"]') ||
-//                     card.querySelector('[class*="price"]')
-//                 const price = priceElement?.textContent?.trim() || null
-
-//                 const agent =
-//                     card.querySelector('.listing-tile__agent, [data-testid="search-card-agent"]')?.textContent?.trim() ||
-//                     card.querySelector('[class*="agent"]')?.textContent?.trim() ||
-//                     null
-
-//                 const listedDate =
-//                     card.querySelector('.listing-tile__date, [data-testid="search-card-date"]')?.textContent?.trim() ||
-//                     null
-
-//                 // Extract bedrooms and bathrooms
-//                 const bedroomsEl =
-//                     card.querySelector('[data-testid="bedrooms"], .listing-tile__bedrooms, [class*="bedroom"]')
-//                 const bathroomsEl =
-//                     card.querySelector('[data-testid="bathrooms"], .listing-tile__bathrooms, [class*="bathroom"]')
-
-//                 const bedrooms = bedroomsEl
-//                     ? parseInt(bedroomsEl.textContent?.replace(/\D/g, '') || '0') || null
-//                     : null
-//                 const bathrooms = bathroomsEl
-//                     ? parseInt(bathroomsEl.textContent?.replace(/\D/g, '') || '0') || null
-//                     : null
-
-//                 return {
-//                     imageURL,
-//                     siteURL,
-//                     address,
-//                     rent_per_week: price ? Number(price.replace(/[^\d]/g, "")) : null,
-//                     agent,
-//                     photos: imageURL ? [imageURL] : null,
-//                     date_listed: listedDate,
-//                     bedrooms,
-//                     bathrooms
-//                 }
-//             })
-//         }
-//     )
-
-//     const detailedData: Listing[] = []
-
-//     for (const listing of listingLinks) {
-//         if (!listing.siteURL) {
-//             detailedData.push({
-//                 ...listing,
-//                 description: null,
-//                 propertyType: null,
-//                 scrapedAt: new Date().toISOString(),
-//                 lastUpdated: new Date().toISOString(),
-//                 source: 'realestate.co.nz'
-//             })
-//             continue
-//         }
-
-//         try {
-//             const fullURL = listing.siteURL.startsWith('http')
-//                 ? listing.siteURL
-//                 : `https://www.realestate.co.nz${listing.siteURL}`
-
-//             await page.goto(fullURL, { waitUntil: "domcontentloaded", timeout: 30000 })
-//             await page.waitForTimeout(1500)
-
-//             const listingDetails = await page.evaluate(() => {
-//                 const description =
-//                     document.querySelector('.listing-description, [data-testid="listing-description"]')?.textContent?.trim() ||
-//                     document.querySelector('.property-description')?.textContent?.trim() ||
-//                     null
-
-//                 const propertyType =
-//                     document.querySelector('.property-type, [data-testid="property-type"]')?.textContent?.trim() ||
-//                     Array.from(document.querySelectorAll('.property-attributes li, .listing-attributes li'))
-//                         .find(el => el.textContent?.toLowerCase().includes('type'))?.textContent?.trim() ||
-//                     null
-
-//                 const photoElements = Array.from(
-//                     document.querySelectorAll('.property-gallery img, .image-gallery img, [data-testid="listing-image"]')
-//                 )
-
-//                 const photos = photoElements
-//                     .map(img => img.getAttribute('src') || img.getAttribute('data-src'))
-//                     .filter(src => src && !src.includes('placeholder'))
-//                     .filter((src, index, self) => self.indexOf(src) === index)
-
-//                 return {
-//                     description,
-//                     propertyType,
-//                     photos: photos.length > 0 ? photos : null
-//                 }
-//             })
-
-//             detailedData.push({
-//                 ...listing,
-//                 ...listingDetails,
-//                 scrapedAt: new Date().toISOString(),
-//                 lastUpdated: new Date().toISOString(),
-//                 source: 'realestate.co.nz'
-//             })
-
-//             await page.waitForTimeout(500)
-
-//         } catch (error) {
-//             console.error(`Error scraping RealEstate.co.nz listing ${listing.siteURL}:`, error)
-//             detailedData.push({
-//                 ...listing,
-//                 description: null,
-//                 propertyType: null,
-//                 scrapedAt: new Date().toISOString(),
-//                 lastUpdated: new Date().toISOString(),
-//                 scrapeFrom: 'realestate.co.nz'
-//             })
-//         }
-//     }
-
-//     return detailedData
-// }
 async function scrapeRealEstateListings(page: any): Promise<Listing[]> {
-  await page.goto(
-    "https://www.realestate.co.nz/residential/rental/central-north-island/ruapehu",
-    { waitUntil: "domcontentloaded", timeout: 60000 }
-  )
 
-  // Wait for listings to load
-  await page.waitForSelector('div.tile.listing-tile', { timeout: 30000 })
-  await page.waitForTimeout(3000)
+  const baseUrl = "https://www.realestate.co.nz/residential/rental/central-north-island/ruapehu"
+  let allListings: any[] = []
+  let currentPage = 1
+  const maxPages = 3
 
-  // Get initial count
-  const initialCount = await page.evaluate(() => {
-    return document.querySelectorAll('div.tile.listing-tile').length
-  })
-  
-  console.log(`Initial load: Found ${initialCount} listings`)
+  while (currentPage <= maxPages) {
+    const url = currentPage === 1 ? baseUrl : `${baseUrl}?page=${currentPage}`
 
-  // Scroll to load all listings
-  console.log('Scrolling to load more listings...')
-  let previousCount = initialCount
-  let stableCount = 0
-  let scrollAttempts = 0
-  const maxScrollAttempts = 10
-  
-  while (scrollAttempts < maxScrollAttempts) {
-    // Scroll to bottom
-    await page.evaluate(() => {
-      window.scrollTo(0, document.body.scrollHeight)
-    })
-    
-    // Wait for potential new content
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 })
     await page.waitForTimeout(3000)
-    
-    // Count again using evaluate to ensure fresh count
-    const currentCount = await page.evaluate(() => {
-      return document.querySelectorAll('div.tile.listing-tile').length
-    })
-    
-    console.log(`Scroll ${scrollAttempts + 1}: Found ${currentCount} listings (previous: ${previousCount})`)
-    
-    // If count hasn't changed for 3 attempts, we're done
-    if (currentCount === previousCount) {
-      stableCount++
-      if (stableCount >= 3) {
-        console.log('No new listings loaded after 3 attempts, stopping')
-        break
-      }
-    } else {
-      stableCount = 0
-      console.log(`Loaded ${currentCount - previousCount} new listings`)
+
+    const scrollHeight: number = await page.evaluate(() => document.body.scrollHeight)
+    const viewportHeight: number = await page.evaluate(() => window.innerHeight)
+    const steps = Math.ceil(scrollHeight / viewportHeight)
+
+    for (let step = 1; step <= steps; step++) {
+      await page.evaluate(({ s, vh }: { s: number, vh: number }) => window.scrollTo(0, s * vh * 0.85), { s: step, vh: viewportHeight })
+      await page.waitForTimeout(1200) // give each batch of placeholders time to resolve
     }
-    
-    previousCount = currentCount
-    scrollAttempts++
+
+    // Wait a bit more for any remaining lazy tiles
+    await page.waitForTimeout(2000)
+
+    // Wait until no placeholders remain (or timeout after 15s)
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-test="lazy-loaded__placeholder"]').length === 0,
+      { timeout: 15000 }
+    ).catch(() => console.warn('Timeout waiting for placeholders to load, proceeding with what we have...'))
+
+    const pageListings = await page.evaluate(() => {
+      const allTiles: any[] = []
+
+      function getBestImage(img: Element | null): string | null {
+        if (!img) return null
+        const srcset = img.getAttribute('srcset') || ''
+
+        for (const width of ['1200w', '1075w', '900w', '767w', '650w']) {
+          // Match: URL<space>WIDTH — URL starts after a comma or start of string
+          const match = srcset.match(new RegExp(`(?:^|,)(https://\\S+\\.jpg\\?options=compress)\\s+${width}`))
+          if (match) return match[1]
+        }
+
+        return img.getAttribute('src') || null
+      }
+
+      function getCarouselPhotos(container: Element): string[] {
+        const photos: string[] = []
+        container.querySelectorAll('.swiper-slide img').forEach(img => {
+          const src = img.getAttribute('src') || ''
+          if (src.includes('blur') || src.includes('.crop.10x')) return
+          const best = getBestImage(img)
+          if (best && !photos.includes(best)) photos.push(best)
+        })
+        return photos
+      }
+
+      // 1. Showcase/stacked tiles
+      document.querySelectorAll('[data-test="stacked-tile"]').forEach(tile => {
+        const siteURL = tile.querySelector('a[href]')?.getAttribute('href') || null
+        const address = tile.querySelector('[data-test="homepage-carousel__listing-title"]')?.textContent?.trim() || null
+        const imageURL = getBestImage(tile.querySelector('img:not(.blur-lg)'))
+        const priceMatch = (tile.querySelector('h4')?.textContent?.trim() || '').match(/\$(\d+)/)
+        const price = priceMatch ? Number(priceMatch[1]) : null
+        const bedrooms = parseInt(tile.querySelector('[data-test="bedroom"]')?.textContent?.trim() || '0') || null
+        const bathrooms = parseInt(tile.querySelector('[data-test="bathroom"]')?.textContent?.trim() || '0') || null
+        const propertyType = tile.querySelector('[data-test="tile__search-result__content__features__divider"]')?.textContent?.trim() || null
+        const agent = tile.querySelector('[data-test="logo__office"] img')?.getAttribute('alt') || null
+
+        allTiles.push({
+          imageURL,
+          siteURL,
+          address,
+          rent_per_week: price,
+          agent: agent ? { agentName: agent, agentEmail: null, agentNumber: null } : null,
+          photos: imageURL ? [imageURL] : null,
+          date_listed: null,
+          bedrooms,
+          bathrooms,
+          propertyType
+        })
+      })
+
+      // 2. All listing tiles (featured + regular)
+      document.querySelectorAll('[data-test="tile"]').forEach(tile => {
+        // Skip any tile that's still a placeholder (no real content)
+        if (!tile.querySelector('h3, [data-test="bedroom"]')) return
+
+        const siteURL =
+          tile.querySelector('a.listing-tile-info')?.getAttribute('href') ||
+          tile.querySelector('a[href*="/residential/rent/"]')?.getAttribute('href') ||
+          null
+
+        const address =
+          tile.querySelector('[data-test="premium-tile__search-result__address"]')?.textContent?.trim() ||
+          tile.querySelector('[data-test="standard-tile__search-result__address"]')?.textContent?.trim() ||
+          null
+
+        const carousel = tile.querySelector('[data-test="carousel-swiper"]')
+        const photos = carousel ? getCarouselPhotos(carousel) : []
+        const imageURL = photos[0] || null
+
+        const priceMatch = (tile.querySelector('[data-test="price-display__price-method"]')?.textContent?.trim() || '').match(/\$(\d+)/)
+        const price = priceMatch ? Number(priceMatch[1]) : null
+
+        const bedrooms = parseInt(tile.querySelector('[data-test="bedroom"]')?.textContent?.trim() || '0') || null
+        const bathrooms = parseInt(tile.querySelector('[data-test="bathroom"]')?.textContent?.trim() || '0') || null
+        const propertyType = tile.querySelector('[data-test="tile__search-result__content__features__divider"]')?.textContent?.trim() || null
+        const dateText = tile.querySelector('[data-test="tile__search-result__content__date"]')?.textContent?.trim() || null
+        const agent = tile.querySelector('[data-test="logo__office"] img')?.getAttribute('alt') || null
+
+        allTiles.push({
+          imageURL,
+          siteURL,
+          address,
+          rent_per_week: price,
+          agent: agent ? { agentName: agent, agentEmail: null, agentNumber: null } : null,
+          photos: photos.length > 0 ? photos : null,
+          date_listed: dateText,
+          bedrooms,
+          bathrooms,
+          propertyType
+        })
+      })
+
+      return allTiles
+    })
+
+    // Log how many placeholders remain for debugging
+    const remainingPlaceholders = await page.evaluate(
+      () => document.querySelectorAll('[data-test="lazy-loaded__placeholder"]').length
+    )
+    allListings = [...allListings, ...pageListings]
+
+    const hasNextPage = await page.evaluate(() => {
+      const currentPageElem = document.querySelector('[data-test="paginated-items__current-page"]')
+      if (!currentPageElem) return false
+      const nextPageNum = parseInt(currentPageElem.textContent?.trim() || '0') + 1
+      return Array.from(document.querySelectorAll('.paginated-items__page-name'))
+        .some(link => parseInt(link.textContent?.trim() || '0') === nextPageNum)
+    })
+
+    if (!hasNextPage || pageListings.length === 0) {
+
+      break
+    }
+
+    currentPage++
+    await page.waitForTimeout(2000)
   }
 
-  const finalCount = await page.evaluate(() => {
-    return document.querySelectorAll('div.tile.listing-tile').length
-  })
-  
-  console.log(`Total listings found: ${finalCount}`)
-
-  // Extract listing data - use evaluate to get everything in one go
-  const listingLinks = await page.evaluate(() => {
-    const tiles = Array.from(document.querySelectorAll('div.tile.listing-tile'))
-    console.log(`Extracting data from ${tiles.length} tiles`)
-    
-    return tiles.map((tile, index) => {
-      // Get the main link
-      const link = tile.querySelector('a.listing-tile-info')
-      const siteURL = link?.getAttribute('href') || null
-      
-      // Get address from h3
-      const address = tile.querySelector('h3[data-test="standard-tile__search-result__address"]')?.textContent?.trim() || null
-      
-      // Get image from the first swiper slide
-      const imageURL = tile.querySelector('.swiper-slide img')?.getAttribute('src') || null
-      
-      // Get price
-      const priceElement = tile.querySelector('[data-test="price-display__price-method"]')
-      const priceText = priceElement?.textContent?.trim() || ''
-      const priceMatch = priceText.match(/\$(\d+)/)
-      const price = priceMatch ? priceMatch[1] : null
-      
-      // Get bedrooms
-      const bedroomElement = tile.querySelector('[data-test="bedroom"]')
-      const bedrooms = bedroomElement ? parseInt(bedroomElement.textContent?.trim() || '0') : null
-      
-      // Get bathrooms
-      const bathroomElement = tile.querySelector('[data-test="bathroom"]')
-      const bathrooms = bathroomElement ? parseInt(bathroomElement.textContent?.trim() || '0') : null
-      
-      // Get property type
-      const propertyType = tile.querySelector('[data-test="tile__search-result__content__features__divider"]')?.textContent?.trim() || null
-      
-      // Get listing date
-      const dateElement = tile.querySelector('.listed-date, [data-test="tile__search-result__content__date"]')
-      const listedDate = dateElement?.textContent?.trim() || null
-      
-      // Get agent/office logo alt text
-      const agentLogo = tile.querySelector('[data-test="logo__office"] img')
-      const agent = agentLogo?.getAttribute('alt') || null
-      
-      if (index < 3) {
-        console.log(`Listing ${index + 1}: ${address} - $${price}/week`)
-      }
-      
-      return {
-        imageURL,
-        siteURL: siteURL ? (siteURL.startsWith('http') ? siteURL : `https://www.realestate.co.nz${siteURL}`) : null,
-        address,
-        rent_per_week: price ? Number(price) : null,
-        agent,
-        photos: imageURL ? [imageURL] : null,
-        date_listed: listedDate,
-        bedrooms,
-        bathrooms,
-        propertyType
-      }
-    })
-  })
-
-  console.log(`Successfully extracted ${listingLinks.length} listings from search page`)
+  const uniqueListings = allListings.filter((listing, index, self) =>
+    listing.siteURL && index === self.findIndex((l: any) => l.siteURL === listing.siteURL)
+  )
 
   const detailedData: Listing[] = []
-  
-  for (let i = 0; i < listingLinks.length; i++) {
-    const listing = listingLinks[i]
-    console.log(`Processing detail page ${i + 1}/${listingLinks.length}: ${listing.address}`)
-    
+
+  for (let i = 0; i < uniqueListings.length; i++) {
+    const listing = uniqueListings[i]
+
     if (!listing.siteURL) {
-      detailedData.push({
-        ...listing,
-        description: null,
-        scrapedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-        source: 'realestate.co.nz'
-      })
+      detailedData.push({ ...listing, description: null, scrapedAt: new Date().toISOString(), lastUpdated: new Date().toISOString(), scrapeFrom: 'realestate.co.nz' })
       continue
     }
 
     try {
-      const fullURL = listing.siteURL.startsWith('http') 
-        ? listing.siteURL 
+      const fullURL = listing.siteURL.startsWith('http')
+        ? listing.siteURL
         : `https://www.realestate.co.nz${listing.siteURL}`
-      
+
       await page.goto(fullURL, { waitUntil: "domcontentloaded", timeout: 30000 })
-      await page.waitForTimeout(2000)
+      await page.waitForTimeout(1500)
 
       const listingDetails = await page.evaluate(() => {
-        // Get description - look for largest text block
-        const paragraphs = Array.from(document.querySelectorAll('p'))
-        const description = paragraphs
-          .map(p => p.textContent?.trim())
-          .filter(t => t && t.length > 100)
-          .sort((a, b) => (b?.length || 0) - (a?.length || 0))[0] || null
+        const description = Array.from(document.querySelectorAll('p'))
+          .map(p => p.textContent?.trim() || '')
+          .filter(t => t.length > 100)
+          .sort((a, b) => b.length - a.length)[0] || null
 
-        // Get all photos from swiper or gallery
-        const photoElements = Array.from(
-          document.querySelectorAll('.swiper-slide img, .property-gallery img, [class*="gallery"] img')
-        )
-        
-        const photos = photoElements
-          .map(img => {
-            const src = img.getAttribute('src') || img.getAttribute('data-src')
-            return src?.replace(/\.crop\.\d+x\d+\.jpg/, '.crop.1200x800.jpg') || src
-          })
-          .filter(src => src && 
-                  src.includes('mediaserver.realestate.co.nz') && 
-                  !src.includes('blur') &&
-                  !src.includes('.scale.'))
-          .filter((src, index, self) => self.indexOf(src) === index)
+        const seen = new Set<string>()
+        const photos: string[] = []
+        document.querySelectorAll('.swiper-slide img, [class*="gallery"] img').forEach(img => {
+          const src = img.getAttribute('src') || ''
+          if (
+            src.includes('mediaserver.realestate.co.nz') &&
+            !src.includes('blur') &&
+            !src.includes('.scale.') &&
+            !src.includes('.crop.10x')
+          ) {
+            const upgraded = src.replace(/\.crop\.\d+x\d+\.jpg/, '.crop.1200x900.jpg')
+            if (!seen.has(upgraded)) { seen.add(upgraded); photos.push(upgraded) }
+          }
+        })
 
-        return {
-          description,
-          photos: photos.length > 0 ? photos : null
-        }
+        return { description, photos: photos.length > 0 ? photos : null }
       })
 
       detailedData.push({
@@ -369,82 +209,75 @@ async function scrapeRealEstateListings(page: any): Promise<Listing[]> {
         photos: listingDetails.photos || listing.photos,
         scrapedAt: new Date().toISOString(),
         lastUpdated: new Date().toISOString(),
-        source: 'realestate.co.nz'
+        scrapeFrom: 'realestate.co.nz'
       })
 
       await page.waitForTimeout(500)
 
     } catch (error) {
-      console.error(`Error scraping listing ${listing.siteURL}:`, error)
-      detailedData.push({
-        ...listing,
-        description: null,
-        scrapedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-        source: 'realestate.co.nz'
-      })
+
+      detailedData.push({ ...listing, description: null, scrapedAt: new Date().toISOString(), lastUpdated: new Date().toISOString(), scrapeFrom: 'realestate.co.nz' })
     }
   }
 
-  console.log(`Successfully scraped ${detailedData.length} RealEstate.co.nz listings with details`)
   return detailedData
 }
-
 export async function GET(request: Request) {
-    try {
-        // Verify cron secret for scheduled requests
-        // const authHeader = request.headers.get('authorization')
-        // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        // }
-        const browser = await chromium.launch({ headless: true })
-        const page = await browser.newPage()
-        const listings = await scrapeRealEstateListings(page)
+  try {
+    // Verify cron secret for scheduled requests
+    // const authHeader = request.headers.get('authorization')
+    // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // }
+    const browser = await chromium.launch({ headless: true })
+    const page = await browser.newPage()
+    const listings = await scrapeRealEstateListings(page)
 
-        // Delete batch
-        const existingListings = await db.collection('realestate_property_listings').get()
-        const deleteBatch = db.batch()
-        existingListings.docs.forEach(doc => {
-            deleteBatch.delete(doc.ref)
-        })
-        await deleteBatch.commit()
+    // Delete batch
+    const existingListings = await db.collection('realestate_property_listings').get()
+    const deleteBatch = db.batch()
+    existingListings.docs.forEach(doc => {
+      deleteBatch.delete(doc.ref)
+    })
+    await deleteBatch.commit()
 
-        // Save to Firestore
-        const batch = db.batch()
-        const collectionRef = db.collection('realestate_property_listings')
+    // Save to Firestore
+    const batch = db.batch()
+    const collectionRef = db.collection('realestate_property_listings')
 
-        for (const listing of listings) {
-            // Use siteURL as document ID (cleaned)
-            const docId = listing.siteURL?.replace(/[^a-zA-Z0-9]/g, '_') || `listing_${Date.now()}`
-            const docRef = collectionRef.doc(docId)
-            batch.set(docRef, listing, { merge: true })
-        }
-
-        await batch.commit()
-
-        // Store metadata about last scrape
-        await db.collection('scrape_metadata').doc('last_run').set({
-            timestamp: new Date().toISOString(),
-            listingsCount: listings.length,
-            status: 'success'
-        })
-
-        return NextResponse.json({
-            success: true,
-            count: listings.length,
-            message: 'Listings scraped and saved successfully'
-        })
-    } catch (error) {
-        // Log error to Firestore
-        await db.collection('scrape_metadata').doc('last_run').set({
-            timestamp: new Date().toISOString(),
-            status: 'error',
-            error: error instanceof Error ? error.message : 'Unknown error'
-        })
-
-        return NextResponse.json({
-            error: 'Failed to scrape listings',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 })
+    for (const listing of listings) {
+      // Use siteURL as document ID (cleaned)
+      const docId = listing.siteURL?.replace(/[^a-zA-Z0-9]/g, '_') || `listing_${Date.now()}`
+      const docRef = collectionRef.doc(docId)
+      batch.set(docRef, listing, { merge: true })
     }
+
+    await batch.commit()
+
+    // Store metadata about last scrape
+    await db.collection('scrape_metadata').doc('last_run').set({
+      timestamp: new Date().toISOString(),
+      listingsCount: listings.length,
+      status: 'success'
+    })
+
+    return NextResponse.json({
+      success: true,
+      count: listings.length,
+      message: 'Listings scraped and saved successfully'
+    })
+  } catch (error) {
+    // Log error to Firestore
+    await db.collection('scrape_metadata').doc('last_run').set({
+      timestamp: new Date().toISOString(),
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    })
+
+    return NextResponse.json({
+      error: 'Failed to scrape listings',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
+  }
 }
+
