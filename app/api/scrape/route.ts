@@ -3,9 +3,9 @@ export const maxDuration = 300 // 5 minutes for Vercel Pro
 import { db } from "@/lib/firestore"
 import { Listing } from "@/types/data-types"
 import { NextResponse } from "next/server"
-import { chromium } from "playwright"
+import { chromium, Page } from "playwright"
 
-async function scrapeTrademeListings(page: any): Promise<Listing[]> {
+async function scrapeTrademeListings(page: Page): Promise<Listing[]> {
   console.log('Navigating to TradeMe...')
 
   await page.goto(
@@ -28,6 +28,7 @@ async function scrapeTrademeListings(page: any): Promise<Listing[]> {
   await page.waitForTimeout(1500)
 
   const listingLinks = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results: any[] = []
 
     // Helper to get best image from a card

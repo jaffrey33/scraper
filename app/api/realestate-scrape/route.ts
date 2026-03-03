@@ -3,12 +3,12 @@ export const maxDuration = 300 // 5 minutes for Vercel Pro
 import { db } from "@/lib/firestore"
 import { Listing } from "@/types/data-types"
 import { NextResponse } from "next/server"
-import { chromium } from "playwright"
+import { chromium, Page } from "playwright"
 
-async function scrapeRealEstateListings(page: any): Promise<Listing[]> {
+async function scrapeRealEstateListings(page: Page): Promise<Listing[]> {
 
   const baseUrl = "https://www.realestate.co.nz/residential/rental/central-north-island/ruapehu"
-  let allListings: any[] = []
+  let allListings: Listing[] = []
   let currentPage = 1
   const maxPages = 3
 
@@ -37,6 +37,7 @@ async function scrapeRealEstateListings(page: any): Promise<Listing[]> {
     ).catch(() => console.warn('Timeout waiting for placeholders to load, proceeding with what we have...'))
 
     const pageListings = await page.evaluate(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const allTiles: any[] = []
 
       function getBestImage(img: Element | null): string | null {
@@ -80,7 +81,7 @@ async function scrapeRealEstateListings(page: any): Promise<Listing[]> {
           siteURL,
           address,
           rent_per_week: price,
-          agent: agent ? { agentName: agent, agentEmail: null, agentNumber: null } : null,
+          agent: { agentName: agent, agentEmail: null, agentNumber: null },
           photos: imageURL ? [imageURL] : null,
           date_listed: null,
           bedrooms,
@@ -122,7 +123,7 @@ async function scrapeRealEstateListings(page: any): Promise<Listing[]> {
           siteURL,
           address,
           rent_per_week: price,
-          agent: agent ? { agentName: agent, agentEmail: null, agentNumber: null } : null,
+          agent: { agentName: agent, agentEmail: null, agentNumber: null },
           photos: photos.length > 0 ? photos : null,
           date_listed: dateText,
           bedrooms,
@@ -135,7 +136,7 @@ async function scrapeRealEstateListings(page: any): Promise<Listing[]> {
     })
 
     // Log how many placeholders remain for debugging
-    const remainingPlaceholders = await page.evaluate(
+    await page.evaluate(
       () => document.querySelectorAll('[data-test="lazy-loaded__placeholder"]').length
     )
     allListings = [...allListings, ...pageListings]
@@ -158,7 +159,7 @@ async function scrapeRealEstateListings(page: any): Promise<Listing[]> {
   }
 
   const uniqueListings = allListings.filter((listing, index, self) =>
-    listing.siteURL && index === self.findIndex((l: any) => l.siteURL === listing.siteURL)
+    listing.siteURL && index === self.findIndex((l) => l.siteURL === listing.siteURL)
   )
 
   const detailedData: Listing[] = []
@@ -214,8 +215,7 @@ async function scrapeRealEstateListings(page: any): Promise<Listing[]> {
 
       await page.waitForTimeout(500)
 
-    } catch (error) {
-
+    } catch {
       detailedData.push({ ...listing, description: null, scrapedAt: new Date().toISOString(), lastUpdated: new Date().toISOString(), scrapeFrom: 'realestate.co.nz' })
     }
   }
