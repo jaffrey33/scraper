@@ -212,10 +212,10 @@ async function scrapeTrademeListings(page: any): Promise<Listing[]> {
 export async function GET(request: Request) {
   try {
     // Verify cron secret for scheduled requests
-    // const authHeader = request.headers.get('authorization')
-    // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    // }
+    const authHeader = request.headers.get('authorization')
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     const browser = await chromium.launch({ headless: true })
     const page = await browser.newPage()
     const listings = await scrapeTrademeListings(page)
