@@ -12,7 +12,7 @@ export default async function Home() {
   const responses = await Promise.all(
     urls.map((url) =>
       fetch(url, {
-        next: { revalidate: 86400 },
+        next: { revalidate: 3600 },
       })
     )
   );
