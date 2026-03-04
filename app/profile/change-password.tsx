@@ -50,7 +50,7 @@ export default function ChangePasswordModal({ onClose }: ChangePasswordModalProp
             setStep("success");
         } catch (error) {
             setError(error instanceof Error ? error.message : "An error occurred.");
-        }finally {
+        } finally {
             setIsLoading(false);
         }
     };
@@ -89,21 +89,20 @@ export default function ChangePasswordModal({ onClose }: ChangePasswordModalProp
                         ))}
                         <div className="flex gap-2 justify-end">
                             <Button
-                                variant="outline"
                                 size="sm"
                                 onClick={onClose}
-                                         className="rounde-md bg-accent text-muted-foreground hover:bg-muted hover:text-black cursor-pointer border"
-                        disabled={isLoading}
+                                className="rounde-md bg-accent text-muted-foreground hover:bg-muted hover:text-black cursor-pointer border h-7 px-3"
+                                disabled={isLoading}
                             >
                                 Cancel
                             </Button>
                             <Button
                                 size="sm"
                                 onClick={handleSubmit}
-                                className="rounde-md bg-accent text-black hover:bg-muted hover:text-black/90 cursor-pointer border"
-                        disabled={isLoading}
+                                className="rounde-md bg-accent text-black hover:bg-muted hover:text-black/90 cursor-pointer border h-7 px-3"
+                                disabled={isLoading}
                             >
-                             {isLoading ? <LoaderCircle className="animate-spin" />: "Update"}
+                                {isLoading ? <LoaderCircle className="animate-spin" /> : "Update"}
                             </Button>
                         </div>
                     </>

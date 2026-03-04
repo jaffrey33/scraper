@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 // import { Alert, AlertDescription } from "@/components/ui/alert";
 import Header from "@/components/header";
 import { useAuth } from "@/context/authContext";
-import { Camera, ChevronLeft, LogOut } from "lucide-react";
+import { Camera, ChevronLeft, Image, LogOut } from "lucide-react";
 import { updateProfile } from "firebase/auth";
 import { sileo } from "sileo";
 import { useRouter } from "next/navigation";
@@ -81,17 +81,16 @@ function EditNameModal({ name, onSave, onClose }: EditNameModalProps) {
                 />
                 <div className="flex gap-2 justify-end">
                     <Button
-                        variant="outline"
                         size="sm"
                         onClick={onClose}
-                         className="rounde-md bg-accent text-muted-foreground hover:bg-muted hover:text-black cursor-pointer border"
+                        className="rounde-md bg-accent text-muted-foreground hover:bg-muted hover:text-black cursor-pointer border h-7 px-3"
                     >
                         Cancel
                     </Button>
                     <Button
                         size="sm"
                         onClick={() => onSave(val)}
-                               className="rounde-md bg-accent text-black hover:bg-muted hover:text-black/90 cursor-pointer border"
+                        className="rounde-md bg-accent text-black hover:bg-muted hover:text-black/90 cursor-pointer border h-7 px-3"
 
                     >
                         Save
@@ -119,9 +118,9 @@ export default function PropertyUserProfile() {
             <Header />
             <div className="max-w-2xl mx-auto px-4 py-10 space-y-5">
                 <Link href='/'>
-                <Button className="mb-4" variant="ghost" size="sm">
-                    <ChevronLeft/>Back
-                </Button>
+                    <Button className="mb-4" variant="ghost" size="sm">
+                        <ChevronLeft />Back
+                    </Button>
                 </Link>
                 {/* Profile Header Card */}
                 <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
@@ -130,10 +129,10 @@ export default function PropertyUserProfile() {
                         <div className="flex items-center gap-5">
                             <div
                                 className="relative group cursor-pointer"
-                                onClick={() => setModal("photo")}
+                                // onClick={() => setModal("photo")}
                             >
                                 <Avatar className="w-20 h-20 ring-2 ring-slate-200">
-                                    <AvatarImage src={user?.photoURL ? user.photoURL : "https://api.dicebear.com/9.x/notionists/svg?seed=jordan"} />
+                                    <AvatarImage src={user?.photoURL ? user.photoURL : "https://api.dicebear.com/9.x/icons/svg?seed=Aiden"} />
                                     <AvatarFallback className="bg-blue-600 text-white text-xl font-semibold">
                                         {getInitials(user?.displayName ?? "User")}
                                     </AvatarFallback>
@@ -156,7 +155,7 @@ export default function PropertyUserProfile() {
                                 </div>
                                 <p className="text-slate-500 text-sm mt-0.5">{user?.email}</p>
                                 <p className="text-slate-400 text-xs mt-1.5">
-                                    Member since {user?.metadata?.creationTime}
+                                    Member since - {user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : "Unknown"}
                                 </p>
                             </div>
 
@@ -237,7 +236,7 @@ export default function PropertyUserProfile() {
                             <Button
                                 size="sm"
                                 onClick={() => setModal("password")}
-                                     className="rounded-md text-xs bg-accent text-muted-foreground hover:bg-muted hover:text-black cursor-pointer border"
+                                className="rounded-md text-xs bg-accent text-muted-foreground hover:bg-muted hover:text-black cursor-pointer border"
                             >
                                 Change Password
                             </Button>
@@ -328,19 +327,7 @@ export default function PropertyUserProfile() {
                             Upload a new photo from your device.
                         </p>
                         <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl py-8 cursor-pointer hover:bg-slate-50 transition-colors mb-4">
-                            <svg
-                                className="w-8 h-8 text-slate-300 mb-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={1.5}
-                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                            </svg>
+                            <Image className="text-slate-500" />
                             <span className="text-sm text-slate-400">Click to upload</span>
                             <span className="text-xs text-slate-300 mt-0.5">
                                 PNG, JPG up to 2MB
@@ -352,14 +339,14 @@ export default function PropertyUserProfile() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setModal(null)}
-                                className="border-slate-200 text-slate-600"
+                                className="rounded-md bg-accent text-muted-foreground hover:bg-muted hover:text-black text-xs h-7 px-3 border"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 size="sm"
                                 onClick={() => setModal(null)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                className="bg-accent text-muted-foreground hover:bg-muted hover:text-black text-xs h-7 px-3 border"
                             >
                                 Upload
                             </Button>
