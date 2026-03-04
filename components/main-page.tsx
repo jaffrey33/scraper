@@ -16,7 +16,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "./ui/pagination"
-import AddProperty from "./add-property-form"
+// import AddProperty from "./add-property-form"
 
 type ScrapeFrom = 'trademe.co.nz' | 'realestate.co.nz'
 
@@ -142,7 +142,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
                     <h1 className="text-2xl font-bold">Property Listing</h1>
                     <p className="text-muted-foreground text-sm">Browse available properties and track time on market</p>
                 </div>
-                <AddProperty />
+                {/* <AddProperty /> */}
             </section>
 
             {/* search */}
