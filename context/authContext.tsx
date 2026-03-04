@@ -34,43 +34,60 @@ export const AuthContextProvider = ({
 }) => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-//   const { success, error } = useToast()
+  //   const { success, error } = useToast()
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser)
-      setLoading(false)
-    })
-    return unsubscribe
-  }, [])
+      if (firebaseUser) {
+        const loginTimeStr = localStorage.getItem("loginTime");
+        const oneWeek = 7 * 24 * 60 * 60 * 1000;
 
+        if (loginTimeStr) {
+          const loginTime = Number(loginTimeStr);
+          if (Date.now() - loginTime > oneWeek) {
+            // Force logout
+            auth.signOut();
+            localStorage.removeItem("loginTime");
+          } else {
+            setUser(firebaseUser);
+          }
+        } else {
+          setUser(firebaseUser);
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
 
   const login = async (email: string, password: string) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      return userCredential.user
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      localStorage.setItem("loginTime", Date.now().toString()); // ✅ store as string
+      return userCredential.user;
     } catch (err: unknown) {
-      // error(getErrorMessage('Incorrect Email or Password'))
-      throw err
-    }finally {
-        setLoading(false)
+      throw err;
+    } finally {
+      setLoading(false);
     }
   }
 
   const logout = async () => {
     try {
       await signOut(auth)
-     // success("Logged out successfully!")
-    } catch  {
-    //   error("Error logging out")
+      localStorage.removeItem("loginTime");
+    } catch {
+      //   error("Error logging out")
     }
   }
 
   const resetPassword = async (email: string) => {
     try {
       await sendPasswordResetEmail(auth, email)
-    //   success("Success! Please check your email for the reset request.")
+      //   success("Success! Please check your email for the reset request.")
     } catch (err: unknown) {
       //   error(getErrorMessage(firebaseError.code || 'Error sending reset password email. Please try again'))
       throw err
