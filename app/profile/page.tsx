@@ -256,7 +256,7 @@ export default function PropertyUserProfile() {
                 </div>
 
                 {/* Danger Zone */}
-                <Card className="border-red-100 shadow-sm bg-white">
+                {/* <Card className="border-red-100 shadow-sm bg-white">
                     <CardHeader className="pb-2 pt-5 px-5">
                         <CardTitle className="text-sm font-semibold text-red-500 uppercase tracking-widest">
                             Danger Zone
@@ -281,7 +281,7 @@ export default function PropertyUserProfile() {
                             </Button>
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
             </div>
 
