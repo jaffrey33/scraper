@@ -25,7 +25,8 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "sileo": "^0.1.5",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
