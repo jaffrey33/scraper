@@ -16,7 +16,7 @@ if (!getApps().length) {
 
 const db = getFirestore()
 
-async function scrapeTrademeListings(page: Page): Promise<Listing[]> {
+async function scrapeRealEstateListings(page: Page): Promise<Listing[]> {
 
   const baseUrl = "https://www.realestate.co.nz/residential/rental/central-north-island/ruapehu"
   let allListings: Listing[] = []
@@ -239,32 +239,30 @@ async function main() {
   const page = await browser.newPage()
 
   try {
-    const listings = await scrapeTrademeListings(page)
+    const listings = await scrapeRealEstateListings(page)
 
     // Delete existing
-    const existingListings = await db.collection('trademe_property_listings').get()
+    const existingListings = await db.collection('realestate_property_listings').get()
     const deleteBatch = db.batch()
     existingListings.docs.forEach(doc => deleteBatch.delete(doc.ref))
     await deleteBatch.commit()
 
     // Save new listings
     const batch = db.batch()
-    const collectionRef = db.collection('trademe_property_listings')
+    const collectionRef = db.collection('realestate_property_listings')
     for (const listing of listings) {
       const docId = listing.siteURL?.replace(/[^a-zA-Z0-9]/g, '_') || `listing_${Date.now()}`
       batch.set(collectionRef.doc(docId), listing, { merge: true })
     }
     await batch.commit()
 
-    await db.collection('scrape_metadata').doc('last_run').set({
+    await db.collection('scrape_metadata').doc('last_run-realestate').set({
       timestamp: new Date().toISOString(),
       listingsCount: listings.length,
       status: 'success'
     })
-
-    console.log(`✓ Done. Saved ${listings.length} listings.`)
   } catch (error) {
-    await db.collection('scrape_metadata').doc('last_run').set({
+    await db.collection('scrape_metadata').doc('last_run-realestate').set({
       timestamp: new Date().toISOString(),
       status: 'error',
       error: error instanceof Error ? error.message : 'Unknown error'

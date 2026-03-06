@@ -247,7 +247,7 @@ async function main() {
         await batch.commit()
 
         // Store metadata about last scrape
-        await db.collection('scrape_metadata').doc('last_run').set({
+        await db.collection('scrape_metadata').doc('last_run-trademe').set({
             timestamp: new Date().toISOString(),
             listingsCount: listings.length,
             status: 'success'
@@ -255,7 +255,7 @@ async function main() {
 
     } catch (error) {
         // Log error to Firestore
-        await db.collection('scrape_metadata').doc('last_run').set({
+        await db.collection('scrape_metadata').doc('last_run-trademe').set({
             timestamp: new Date().toISOString(),
             status: 'error',
             error: error instanceof Error ? error.message : 'Unknown error'
