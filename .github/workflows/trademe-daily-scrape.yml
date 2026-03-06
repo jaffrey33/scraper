@@ -26,4 +26,4 @@ jobs:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
           FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-        run: npx ts-node --project tsconfig.json scripts/trademe-scrape.ts
+        run: npx ts-node --project tsconfig.json script/trademe-scrape.ts
