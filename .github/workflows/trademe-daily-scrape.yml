@@ -20,7 +20,9 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
-
+      - name: Compile
+        run: npx tsc -p tsconfig.scripts.json
+  
       - name: Run scraper
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
