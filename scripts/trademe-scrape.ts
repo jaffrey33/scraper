@@ -1,4 +1,4 @@
-import { Listing } from "@/types/data-types"
+import { Listing } from "../types/data-types"
 import { chromium, Page } from "playwright-core"
 import { initializeApp, getApps, cert } from 'firebase-admin/app'
 import { getFirestore } from "firebase-admin/firestore"
