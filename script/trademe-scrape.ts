@@ -1,6 +1,6 @@
+import { db } from "@/lib/firestore"
+import { Listing } from "@/types/data-types"
 import { chromium, Page } from "playwright"
-import { db } from "../lib/firestore"
-import { Listing } from "../types/data-types"
 
 async function scrapeTrademeListings(page: Page): Promise<Listing[]> {
 
