@@ -242,10 +242,20 @@ async function main() {
     const listings = await scrapeRealEstateListings(page)
 
     // Delete existing
-    const existingListings = await db.collection('realestate_property_listings').get()
-    const deleteBatch = db.batch()
-    existingListings.docs.forEach(doc => deleteBatch.delete(doc.ref))
-    await deleteBatch.commit()
+    const fiveDaysAgo = new Date();
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+    const existingListings = await db.collection('realestate_property_listings')
+      .where('scrapedAt', '<', fiveDaysAgo.toISOString())
+      .get();
+
+    const chunkSize = 500;
+    for (let i = 0; i < existingListings.docs.length; i += chunkSize) {
+      const chunk = existingListings.docs.slice(i, i + chunkSize);
+      const deleteBatch = db.batch();
+      chunk.forEach(doc => deleteBatch.delete(doc.ref));
+      await deleteBatch.commit();
+    }
+
 
     // Save new listings
     const batch = db.batch()

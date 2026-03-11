@@ -226,12 +226,20 @@ async function main() {
         const listings = await scrapeTrademeListings(page)
 
         // Delete batch
-        const existingListings = await db.collection('trademe_property_listings').get()
-        const deleteBatch = db.batch()
-        existingListings.docs.forEach(doc => {
-            deleteBatch.delete(doc.ref)
-        })
-        await deleteBatch.commit()
+        const fiveDaysAgo = new Date();
+        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+        const existingListings = await db.collection('trademe_property_listings')
+            .where('scrapedAt', '<', fiveDaysAgo.toISOString())
+            .get();
+
+        const chunkSize = 500;
+        for (let i = 0; i < existingListings.docs.length; i += chunkSize) {
+            const chunk = existingListings.docs.slice(i, i + chunkSize);
+            const deleteBatch = db.batch();
+            chunk.forEach(doc => deleteBatch.delete(doc.ref));
+            await deleteBatch.commit();
+        }
+
 
         // Save to Firestore
         const batch = db.batch()
@@ -267,6 +275,6 @@ async function main() {
 }
 
 main().catch(error => {
-  console.error("Error in main:", error)
-  process.exit(1)
+    console.error("Error in main:", error)
+    process.exit(1)
 })
