@@ -3,7 +3,6 @@ import Header from "@/components/header";
 import MainPage from "@/components/main-page";
 import ProtectedRoute from "./auth/protected-route";
 
-export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
@@ -12,6 +11,7 @@ export default async function Home() {
   const responses = await Promise.all(
     urls.map((url) =>
       fetch(url, {
+        method: "GET",
         next: { revalidate: 3600 },
       })
     )

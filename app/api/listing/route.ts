@@ -1,30 +1,101 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/firestore"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const url = new URL(request.url)
+    const daysAgoParam = url.searchParams.get("daysAgo")
+    const dateParam = url.searchParams.get("date") // YYYY-MM-DD
+
+    let bodyDaysAgo: unknown = undefined
+    let bodyDate: unknown = undefined
+    try {
+      const ct = request.headers.get("content-type") || ""
+      if (ct.includes("application/json")) {
+        const body = await request.json()
+        bodyDaysAgo = body?.daysAgo
+        bodyDate = body?.date
+      }
+    } catch {
+      // ignore
+    }
+
+    const daysAgoRaw = daysAgoParam ?? (typeof bodyDaysAgo === "string" || typeof bodyDaysAgo === "number" ? String(bodyDaysAgo) : null)
+    const dateRaw = dateParam ?? (typeof bodyDate === "string" ? bodyDate : null)
+
+    const startOfDayUtcIso = (d: Date) =>
+      new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0)).toISOString()
+    const startOfNextDayUtcIso = (d: Date) =>
+      new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 0, 0, 0, 0)).toISOString()
+
+    let startIso: string | null = null
+    let endIso: string | null = null
+
+    if (dateRaw) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateRaw)
+      if (m) {
+        const y = Number(m[1])
+        const mo = Number(m[2]) - 1
+        const da = Number(m[3])
+        const d = new Date(Date.UTC(y, mo, da, 0, 0, 0, 0))
+        if (!Number.isNaN(d.getTime())) {
+          startIso = startOfDayUtcIso(d)
+          endIso = startOfNextDayUtcIso(d)
+        }
+      }
+    } else if (daysAgoRaw != null) {
+      const n = Math.max(0, Math.min(30, Number.parseInt(daysAgoRaw, 10)))
+      if (!Number.isNaN(n)) {
+        const d = new Date()
+        d.setUTCDate(d.getUTCDate() - n)
+        startIso = startOfDayUtcIso(d)
+        endIso = startOfNextDayUtcIso(d)
+      }
+    }
 
     // Get last scrape metadata
     const metadataDoc = await db.collection('scrape_metadata').doc('last_run').get()
     const metadata = metadataDoc.data()
 
+    let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> =
+      db.collection('trademe_property_listings')
 
-    const snapshot = await db.collection('trademe_property_listings').get()
+    if (startIso && endIso) {
+      query = query
+        .where('scrapedAt', '>=', startIso)
+        .where('scrapedAt', '<', endIso)
+        .orderBy('scrapedAt', 'desc')
+    }
+
+    const snapshot = await query.get()
     const listings = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }))
 
+    const historyDates = Array.from(
+      new Set(
+        listings
+          .map((l) => {
+            const scrapedAt = (l as Record<string, unknown>)["scrapedAt"]
+            return typeof scrapedAt === "string" ? scrapedAt.slice(0, 10) : null
+          })
+          .filter(Boolean) as string[]
+      )
+    ).sort((a, b) => (a < b ? 1 : -1))
 
 
     return NextResponse.json({
       listings,
       metadata,
-      count: listings.length
+      count: listings.length,
+      historyDates,
+      range: startIso && endIso ? { startIso, endIso } : null
     })
-  } catch {
+  } catch (error) {
     return NextResponse.json({
-      error: 'Failed to fetch listings'
+      error: 'Failed to fetch listings',
+      details: error instanceof Error ? error.message : "Unknown error"
     }, { status: 500 })
   }
 }

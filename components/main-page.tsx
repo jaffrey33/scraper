@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronDown, Search } from "lucide-react"
+import { ChevronDown, Search, TimerReset } from "lucide-react"
 import PropertyCard from "./property-card"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -23,11 +23,14 @@ type ScrapeFrom = 'trademe.co.nz' | 'realestate.co.nz'
 const ITEMS_PER_PAGE = 9
 
 function MainPage({ properties }: { properties: Listing[] }) {
+    const [displayProperties, setDisplayProperties] = useState<Listing[]>(properties)
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedBedrooms, setSelectedBedrooms] = useState<number[]>([])
     const [selectedDateRanges, setSelectedDateRanges] = useState<string[]>([])
     const [selectedFrom, setSelectedFrom] = useState<ScrapeFrom | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
+    const [selectedHistoryDaysAgo, setSelectedHistoryDaysAgo] = useState<number>(0)
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false)
     const handleSearch = () => {
         // Search is already handled by useEffect
     }
@@ -44,17 +47,17 @@ function MainPage({ properties }: { properties: Listing[] }) {
     // Get unique bedroom counts
 
     const bedroomOptions = Array.from(
-        new Set(properties.map(l => l.bedrooms).filter(b => b !== null))
+        new Set(displayProperties.map(l => l.bedrooms).filter(b => b !== null))
     ).sort((a, b) => (a || 0) - (b || 0))
 
 
     const dateRangeOptions = Array.from(
-        new Set(properties.map(l => l.date_listed).filter(Boolean))
+        new Set(displayProperties.map(l => l.date_listed).filter(Boolean))
     ).sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime()) as string[]
 
     // Apply filters (derived state)
     const filteredListings = useMemo(() => {
-        let filtered = [...properties]
+        let filtered = [...displayProperties]
 
         // Search filter
         if (searchQuery) {
@@ -84,7 +87,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
         }
 
         return filtered
-    }, [properties, searchQuery, selectedBedrooms, selectedDateRanges, selectedFrom])
+    }, [displayProperties, searchQuery, selectedBedrooms, selectedDateRanges, selectedFrom])
 
     const totalPages = Math.max(1, Math.ceil(filteredListings.length / ITEMS_PER_PAGE))
     const paginatedListings = useMemo(() => {
@@ -127,7 +130,11 @@ function MainPage({ properties }: { properties: Listing[] }) {
         setSelectedFrom(prev => (prev === source ? null : source));
     };
 
-
+    const daysAgo = (n: number) => {
+        let d = new Date();
+        d.setDate(d.getDate() - Math.abs(n));
+        return d;
+    };
 
     const clearFilters = () => {
         setSearchQuery('')
@@ -135,13 +142,53 @@ function MainPage({ properties }: { properties: Listing[] }) {
         setSelectedDateRanges([])
         setSelectedFrom(null)
     }
+
+    const fetchHistory = async (daysAgo: number) => {
+        setIsLoadingHistory(true)
+        try {
+            const [tmRes, reRes] = await Promise.all([
+                fetch(`/api/listing?daysAgo=${daysAgo}`, { method: "GET" }),
+                fetch(`/api/realestate-listing?daysAgo=${daysAgo}`, { method: "GET" }),
+            ])
+
+            const [tm, re] = await Promise.all([tmRes.json(), reRes.json()])
+            const merged = [...(tm?.listings ?? []), ...(re?.listings ?? [])] as Listing[]
+
+            setDisplayProperties(merged)
+            setSelectedHistoryDaysAgo(daysAgo)
+            setCurrentPage(1)
+            clearFilters()
+        } finally {
+            setIsLoadingHistory(false)
+        }
+    }
     return (
         <div className="px-4 py-16 flex flex-col gap-8">
-            <section className="flex justify-between">
+            <section className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold">Property Listing</h1>
                     <p className="text-muted-foreground text-sm">Browse available properties and track time on market</p>
                 </div>
+                {/* scrape history */}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant='ghost' disabled={isLoadingHistory}>
+                            <TimerReset />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        {[0, 1, 2, 3, 4].map((n) => (
+                            <DropdownMenuCheckboxItem
+                                key={n}
+                                checked={selectedHistoryDaysAgo === n}
+                                onCheckedChange={() => fetchHistory(n)}
+                                disabled={isLoadingHistory}
+                            >
+                                {daysAgo(n).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) }{(n === 0 &&  ' (Today)')}
+                            </DropdownMenuCheckboxItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
                 {/* <AddProperty /> */}
             </section>
 
@@ -164,7 +211,8 @@ function MainPage({ properties }: { properties: Listing[] }) {
                 </div>
 
                 <div className="flex items-center gap-2 mt-4">
-                    <div className="space-x-2 flex-1">
+                    <div className="gap-2 flex items-center">
+
                         {/* Bedrooms Filter */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -236,7 +284,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
 
                     {/* Clear Filters */}
                     {(searchQuery || selectedBedrooms.length > 0 || selectedDateRanges.length > 0 || selectedFrom) && (
-                        <Button variant="ghost" onClick={clearFilters} className="text-sm">
+                        <Button variant="ghost" onClick={clearFilters} className="text-sm ml-auto">
                             Clear all
                         </Button>
                     )}
@@ -245,23 +293,27 @@ function MainPage({ properties }: { properties: Listing[] }) {
                 {/* Results count */}
                 <div className="mt-4 text-sm text-muted-foreground">
                     {filteredListings.length === 0
-                    ? "Showing 0 of 0 listings"
-                    : `Showing ${(currentPage - 1) * ITEMS_PER_PAGE + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, filteredListings.length)} of ${filteredListings.length} listings`}
+                        ? "Showing 0 of 0 listings"
+                        : `Showing ${(currentPage - 1) * ITEMS_PER_PAGE + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, filteredListings.length)} of ${filteredListings.length} listings`}
                 </div>
             </section>
+
             {/* Listing */}
             <section className="flex flex-col gap-6">
+
                 <div className="grid grid-cols-1 gap-4">
                     {paginatedListings.map((property, index) => (
                         <PropertyCard key={(currentPage - 1) * ITEMS_PER_PAGE + index} property={property} />
                     ))}
                 </div>
+
+                {/* Pagination */}
                 {totalPages > 1 && (
                     <Pagination>
                         <PaginationContent>
                             <PaginationItem>
                                 <PaginationPrevious
-                                className="border-none mr-6"
+                                    className="border-none mr-6"
                                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                                     disabled={currentPage <= 1}
                                 />
@@ -284,7 +336,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
                             )}
                             <PaginationItem>
                                 <PaginationNext
-                                className="border-none ml-4"
+                                    className="border-none ml-4"
                                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                                     disabled={currentPage >= totalPages}
                                 />
@@ -292,6 +344,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
                         </PaginationContent>
                     </Pagination>
                 )}
+
             </section>
         </div>
     )
