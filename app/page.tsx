@@ -6,7 +6,12 @@ import ProtectedRoute from "./auth/protected-route";
 
 export default async function Home() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-  const urls = [`${baseUrl}/api/listing`, `${baseUrl}/api/realestate-listing`];
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10); // YYYY-MM-DD
+  const urls = [
+    `${baseUrl}/api/listing?date=${todayStr}`,
+    `${baseUrl}/api/realestate-listing?date=${todayStr}`,
+  ];
 
   const responses = await Promise.all(
     urls.map((url) =>
