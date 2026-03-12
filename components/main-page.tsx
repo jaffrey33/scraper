@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronDown, Search, TimerReset } from "lucide-react"
+import { ChevronDown, House, LoaderCircle, Search, TimerReset } from "lucide-react"
 import PropertyCard from "./property-card"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -16,6 +16,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "./ui/pagination"
+import Image from "next/image"
 // import AddProperty from "./add-property-form"
 
 type ScrapeFrom = 'trademe.co.nz' | 'realestate.co.nz'
@@ -184,7 +185,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
                                 onCheckedChange={() => fetchHistory(n)}
                                 disabled={isLoadingHistory}
                             >
-                                {daysAgo(n).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) }{(n === 0 &&  ' (Today)')}
+                                {daysAgo(n).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}{(n === 0 && ' (Today)')}
                             </DropdownMenuCheckboxItem>
                         ))}
                     </DropdownMenuContent>
@@ -302,9 +303,28 @@ function MainPage({ properties }: { properties: Listing[] }) {
             <section className="flex flex-col gap-6">
 
                 <div className="grid grid-cols-1 gap-4">
-                    {paginatedListings.map((property, index) => (
+                    {isLoadingHistory ? 
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <LoaderCircle className="animate-spin text-muted-foreground" />
+                        <h3 className="text-lg text-muted-foreground mt-4">Loading history...</h3>
+                    </div> : paginatedListings.length > 0 ? paginatedListings.map((property, index) => (
                         <PropertyCard key={(currentPage - 1) * ITEMS_PER_PAGE + index} property={property} />
-                    ))}
+                    )) : (
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <div className="text-6xl mb-4">
+                                <Image
+                                    src="/house.svg"
+                                    alt="No results"
+                                    width={120}
+                                    height={120}
+                                />
+                            </div>
+                            <h3 className="text-xl font-semibold mb-2">No properties found</h3>
+                            <p className="text-muted-foreground max-w-sm">
+                                Try adjusting your filters to find more listings in your desired area or time frame.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Pagination */}
