@@ -247,7 +247,7 @@ async function main() {
 
         for (const listing of listings) {
             // Use siteURL as document ID (cleaned)
-                const docId = `${listing.siteURL?.replace(/[^a-zA-Z0-9]/g, '_')} - listing_${Date.now()}` || `listing_${Date.now()}`
+            const docId = `${listing.siteURL?.replace(/[^a-zA-Z0-9]/g, '_')} - listing_${Date.now()}` || `listing_${Date.now()}`
             const docRef = collectionRef.doc(docId)
             batch.set(docRef, listing, { merge: true })
         }
