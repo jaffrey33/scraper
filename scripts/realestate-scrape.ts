@@ -261,7 +261,7 @@ async function main() {
     const batch = db.batch()
     const collectionRef = db.collection('realestate_property_listings')
     for (const listing of listings) {
-      const docId = listing.siteURL?.replace(/[^a-zA-Z0-9]/g, '_') || `listing_${Date.now()}`
+      const docId = `${listing.siteURL?.replace(/[^a-zA-Z0-9]/g, '_')} - listing_${Date.now()}` || `listing_${Date.now()}`
       batch.set(collectionRef.doc(docId), listing, { merge: true })
     }
     await batch.commit()
