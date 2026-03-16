@@ -292,10 +292,12 @@ function MainPage({ properties }: { properties: Listing[] }) {
                 </div>
 
                 {/* Results count */}
-                <div className="mt-4 text-sm text-muted-foreground">
+                <div className="mt-4 text-sm text-muted-foreground flex justify-between">
                     {filteredListings.length === 0
                         ? "Showing 0 of 0 listings"
                         : `Showing ${(currentPage - 1) * ITEMS_PER_PAGE + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, filteredListings.length)} of ${filteredListings.length} listings`}
+
+                    <p>{pageNumbers.length > 1 && `Page ${currentPage} of ${totalPages}`}</p>
                 </div>
             </section>
 
@@ -303,28 +305,28 @@ function MainPage({ properties }: { properties: Listing[] }) {
             <section className="flex flex-col gap-6">
 
                 <div className="grid grid-cols-1 gap-4">
-                    {isLoadingHistory ? 
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <LoaderCircle className="animate-spin text-muted-foreground" />
-                        <h3 className="text-lg text-muted-foreground mt-4">Loading history...</h3>
-                    </div> : paginatedListings.length > 0 ? paginatedListings.map((property, index) => (
-                        <PropertyCard key={(currentPage - 1) * ITEMS_PER_PAGE + index} property={property} />
-                    )) : (
+                    {isLoadingHistory ?
                         <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <div className="text-6xl mb-4">
-                                <Image
-                                    src="/house.svg"
-                                    alt="No results"
-                                    width={120}
-                                    height={120}
-                                />
+                            <LoaderCircle className="animate-spin text-muted-foreground" />
+                            <h3 className="text-lg text-muted-foreground mt-4">Loading history...</h3>
+                        </div> : paginatedListings.length > 0 ? paginatedListings.map((property, index) => (
+                            <PropertyCard key={(currentPage - 1) * ITEMS_PER_PAGE + index} property={property} />
+                        )) : (
+                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <div className="text-6xl mb-4">
+                                    <Image
+                                        src="/house.svg"
+                                        alt="No results"
+                                        width={120}
+                                        height={120}
+                                    />
+                                </div>
+                                <h3 className="text-xl font-semibold mb-2">No properties found</h3>
+                                <p className="text-muted-foreground max-w-sm">
+                                    Try adjusting your filters to find more listings in your desired area or time frame.
+                                </p>
                             </div>
-                            <h3 className="text-xl font-semibold mb-2">No properties found</h3>
-                            <p className="text-muted-foreground max-w-sm">
-                                Try adjusting your filters to find more listings in your desired area or time frame.
-                            </p>
-                        </div>
-                    )}
+                        )}
                 </div>
 
                 {/* Pagination */}
@@ -334,7 +336,14 @@ function MainPage({ properties }: { properties: Listing[] }) {
                             <PaginationItem>
                                 <PaginationPrevious
                                     className="border-none mr-6"
-                                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                    onClick={() => {
+                                        window.scrollTo({
+                                            top: 0,
+                                            left: 0,
+                                            behavior: 'smooth'
+                                        });
+                                        setCurrentPage((p) => Math.max(1, p - 1))
+                                    }}
                                     disabled={currentPage <= 1}
                                 />
                             </PaginationItem>
@@ -347,7 +356,14 @@ function MainPage({ properties }: { properties: Listing[] }) {
                                     <PaginationItem key={page}>
                                         <PaginationLink
                                             isActive={currentPage === page}
-                                            onClick={() => setCurrentPage(page)}
+                                            onClick={() => {
+                                                window.scrollTo({
+                                                    top: 0,
+                                                    left: 0,
+                                                    behavior: 'smooth'
+                                                });
+                                                setCurrentPage(page)
+                                            }}
                                         >
                                             {page}
                                         </PaginationLink>
@@ -357,7 +373,15 @@ function MainPage({ properties }: { properties: Listing[] }) {
                             <PaginationItem>
                                 <PaginationNext
                                     className="border-none ml-4"
-                                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                    onClick={() => {
+                                        window.scrollTo({
+                                            top: 0,
+                                            left: 0,
+                                            behavior: 'smooth'
+                                        });
+                                        setCurrentPage((p) => Math.min(totalPages, p + 1));
+
+                                    }}
                                     disabled={currentPage >= totalPages}
                                 />
                             </PaginationItem>
