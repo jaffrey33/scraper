@@ -18,10 +18,10 @@ const db = getFirestore()
 
 async function scrapeRealEstateListings(page: Page): Promise<Listing[]> {
 
-  const baseUrl = "https://www.realestate.co.nz/residential/rental/central-north-island/ruapehu"
+  const baseUrl = "https://www.realestate.co.nz/residential/rental/central-north-island/"
   let allListings: Listing[] = []
   let currentPage = 1
-  const maxPages = 3
+  const maxPages =10
 
   while (currentPage <= maxPages) {
     const url = currentPage === 1 ? baseUrl : `${baseUrl}?page=${currentPage}`
