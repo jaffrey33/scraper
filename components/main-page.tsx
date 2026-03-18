@@ -27,7 +27,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
     const [displayProperties, setDisplayProperties] = useState<Listing[]>(properties)
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedBedrooms, setSelectedBedrooms] = useState<number[]>([])
-    const [selectedDateRanges, setSelectedDateRanges] = useState<string[]>([])
+    const [selectedMonthBucket, setSelectedMonthBucket] = useState<number | null>(null)
     const [selectedFrom, setSelectedFrom] = useState<ScrapeFrom | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedHistoryDaysAgo, setSelectedHistoryDaysAgo] = useState<number>(0)
@@ -52,14 +52,43 @@ function MainPage({ properties }: { properties: Listing[] }) {
     ).sort((a, b) => (a || 0) - (b || 0))
 
 
-    const dateRangeOptions = Array.from(
-        new Set(displayProperties.map(l => l.date_listed).filter(Boolean))
-    ).sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime()) as string[]
+    const MONTH_BUCKETS = [3, 6, 12, 24]
+
+    const parseDateListed = (raw: string): Date | null => {
+        const now = new Date()
+        const s = raw.replace(/^Listed\s*/i, '').trim()
+
+        if (/^today$/i.test(s)) return now
+        if (/^yesterday$/i.test(s)) { const d = new Date(now); d.setDate(d.getDate() - 1); return d }
+
+        const daysMatch = s.match(/^(\d+)\s+days?\s+ago$/i)
+        if (daysMatch) { const d = new Date(now); d.setDate(d.getDate() - parseInt(daysMatch[1])); return d }
+
+        const weeksMatch = s.match(/^(\d+|a)\s+weeks?\s+ago$/i)
+        if (weeksMatch) { const n = weeksMatch[1] === 'a' ? 1 : parseInt(weeksMatch[1]); const d = new Date(now); d.setDate(d.getDate() - n * 7); return d }
+
+        const monthsMatch = s.match(/^(\d+|a)\s+months?\s+ago$/i)
+        if (monthsMatch) { const n = monthsMatch[1] === 'a' ? 1 : parseInt(monthsMatch[1]); const d = new Date(now); d.setMonth(d.getMonth() - n); return d }
+
+        // "Mon, 8 Sep" or "Fri, 27 Jun" — no year, infer it
+        const shortDate = s.match(/^\w+,\s+\d+\s+\w+$/)
+        if (shortDate) {
+            const year = now.getFullYear()
+            const parsed = new Date(`${s} ${year}`)
+            if (!isNaN(parsed.getTime())) {
+                // If parsed date is in the future, it belongs to prior year
+                return parsed > now ? new Date(`${s} ${year - 1}`) : parsed
+            }
+        }
+
+        const d = new Date(s)
+        return isNaN(d.getTime()) ? null : d
+    }
 
     // Apply filters (derived state)
     const filteredListings = useMemo(() => {
         let filtered = [...displayProperties]
-
+        setCurrentPage(1)
         // Search filter
         if (searchQuery) {
             filtered = filtered.filter(listing =>
@@ -74,11 +103,15 @@ function MainPage({ properties }: { properties: Listing[] }) {
             )
         }
 
-        // Date range filter
-        if (selectedDateRanges.length > 0) {
-            filtered = filtered.filter(listing =>
-                listing.date_listed !== null && selectedDateRanges.includes(listing.date_listed)
-            )
+        // Month bucket filter
+        if (selectedMonthBucket !== null) {
+            const cutoff = new Date()
+            cutoff.setMonth(cutoff.getMonth() - selectedMonthBucket)
+            filtered = filtered.filter(listing => {
+                if (!listing.date_listed) return false
+                const d = parseDateListed(listing.date_listed)
+                return d !== null && d >= cutoff
+            })
         }
         // Listing from filter
         if (selectedFrom) {
@@ -88,7 +121,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
         }
 
         return filtered
-    }, [displayProperties, searchQuery, selectedBedrooms, selectedDateRanges, selectedFrom])
+    }, [displayProperties, searchQuery, selectedBedrooms, selectedMonthBucket, selectedFrom])
 
     const totalPages = Math.max(1, Math.ceil(filteredListings.length / ITEMS_PER_PAGE))
     const paginatedListings = useMemo(() => {
@@ -120,13 +153,10 @@ function MainPage({ properties }: { properties: Listing[] }) {
         )
     }
 
-    const toggleDateRange = (range: string) => {
-        setSelectedDateRanges(prev =>
-            prev.includes(range)
-                ? prev.filter(r => r !== range)
-                : [...prev, range]
-        )
+    const toggleMonthBucket = (months: number) => {
+        setSelectedMonthBucket(prev => (prev === months ? null : months))
     }
+
     const toggleFrom = (source: ScrapeFrom) => {
         setSelectedFrom(prev => (prev === source ? null : source));
     };
@@ -140,7 +170,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
     const clearFilters = () => {
         setSearchQuery('')
         setSelectedBedrooms([])
-        setSelectedDateRanges([])
+        setSelectedMonthBucket(null)
         setSelectedFrom(null)
     }
 
@@ -239,18 +269,18 @@ function MainPage({ properties }: { properties: Listing[] }) {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant='outline' className="rounded-full">
-                                    Listing Dates {selectedDateRanges.length > 0 && `(${selectedDateRanges.length})`}
+                                    Listed Within {selectedMonthBucket !== null ? `(${selectedMonthBucket}mo)` : ''}
                                     <ChevronDown className="ml-1 h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
-                                {dateRangeOptions.map((range) => (
+                                {MONTH_BUCKETS.map((months) => (
                                     <DropdownMenuCheckboxItem
-                                        key={range}
-                                        checked={selectedDateRanges.includes(range)}
-                                        onCheckedChange={() => toggleDateRange(range)}
+                                        key={months}
+                                        checked={selectedMonthBucket === months}
+                                        onCheckedChange={() => toggleMonthBucket(months)}
                                     >
-                                        {range}
+                                        {months} months
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
@@ -284,7 +314,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
                     </div>
 
                     {/* Clear Filters */}
-                    {(searchQuery || selectedBedrooms.length > 0 || selectedDateRanges.length > 0 || selectedFrom) && (
+                    {(searchQuery || selectedBedrooms.length > 0 || selectedMonthBucket !== null || selectedFrom) && (
                         <Button variant="ghost" onClick={clearFilters} className="text-sm ml-auto">
                             Clear all
                         </Button>
