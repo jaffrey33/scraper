@@ -18,7 +18,7 @@ function Header() {
   return (
     <header className='p-4 bg-accent'>
       <div className='h-32' />
-      <nav className='container xl:w-1/2 mx-auto flex justify-between items-center'>
+      <nav className='container xl:w-3/4 mx-auto flex justify-between items-center'>
         <div className='flex items-center gap-1'>
           <h1 className='text-2xl font-bold'>Property Management System</h1>
         </div>
