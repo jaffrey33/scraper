@@ -242,7 +242,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
                 </div>
 
                 <div className="flex items-center gap-2 mt-4">
-                    <div className="gap-2 flex items-center">
+                    <div className="gap-2 flex items-center flex-wrap">
 
                         {/* Bedrooms Filter */}
                         <DropdownMenu>
@@ -365,7 +365,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
                         <PaginationContent>
                             <PaginationItem>
                                 <PaginationPrevious
-                                    className="border-none mr-6"
+                                    className="border-none mr-4 w-fit"
                                     onClick={() => {
                                         window.scrollTo({
                                             top: 0,
@@ -402,7 +402,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
                             )}
                             <PaginationItem>
                                 <PaginationNext
-                                    className="border-none ml-4"
+                                    className="border-none ml-4  w-fit"
                                     onClick={() => {
                                         window.scrollTo({
                                             top: 0,
