@@ -29,7 +29,7 @@ export default async function Home() {
     <ProtectedRoute>
       <>
         <Header />
-        <main className="container mx-auto xl:w-3/4">
+        <main className="container mx-auto  2xl:w-1/2 ">
           <MainPage properties={dataMerge} />
         </main>
       </>
