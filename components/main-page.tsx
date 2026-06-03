@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronDown, House, LoaderCircle, Search, TimerReset } from "lucide-react"
+import { ChevronDown, LoaderCircle, Search, TimerReset } from "lucide-react"
 import PropertyCard from "./property-card"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -17,7 +17,7 @@ import {
     PaginationPrevious,
 } from "./ui/pagination"
 import Image from "next/image"
-// import AddProperty from "./add-property-form"
+
 
 type ScrapeFrom = 'trademe.co.nz' | 'realestate.co.nz'
 
@@ -36,21 +36,11 @@ function MainPage({ properties }: { properties: Listing[] }) {
         // Search is already handled by useEffect
     }
 
-    // Get unique locations from listings
-    // const locations = Array.from(
-    //     new Set(
-    //         properties
-    //             .map(l => l.address?.split(',').pop()?.trim())
-    //             .filter(Boolean)
-    //     )
-    // ).sort()
-
     // Get unique bedroom counts
 
     const bedroomOptions = Array.from(
         new Set(displayProperties.map(l => l.bedrooms).filter(b => b !== null))
     ).sort((a, b) => (a || 0) - (b || 0))
-
 
     const MONTH_BUCKETS = [3, 6, 12, 24]
 
@@ -83,6 +73,82 @@ function MainPage({ properties }: { properties: Listing[] }) {
 
         const d = new Date(s)
         return isNaN(d.getTime()) ? null : d
+    }
+
+    const parseFetchedDateListed = (str: string | null): Date => {
+        if (!str) return new Date(0)
+
+        const clean = str.replace(/^Listed\s*/i, "").trim()
+        const now = new Date()
+
+        const hoursMatch = clean.match(/^(\d+)\s+hours?\s+ago$/i)
+        if (hoursMatch) {
+            const d = new Date(now)
+            d.setHours(d.getHours() - parseInt(hoursMatch[1]))
+            return d
+        }
+        if (/^today$/i.test(clean)) return new Date(8640000000000000)
+
+        if (/^yesterday$/i.test(clean)) {
+            const d = new Date(now)
+            d.setDate(d.getDate() - 1)
+            return d
+        }
+
+        const daysMatch = clean.match(/^(\d+)\s+days?\s+ago$/i)
+        if (daysMatch) {
+            const d = new Date(now)
+            d.setDate(d.getDate() - parseInt(daysMatch[1]))
+            return d
+        }
+
+        const weeksMatch = clean.match(/^(a|\d+)\s+weeks?\s+ago$/i)
+        if (weeksMatch) {
+            const n = weeksMatch[1] === "a" ? 1 : parseInt(weeksMatch[1])
+            const d = new Date(now)
+            d.setDate(d.getDate() - n * 7)
+            return d
+        }
+
+        const monthsMatch = clean.match(/^(a|\d+)\s+months?\s+ago$/i)
+        if (monthsMatch) {
+            const n = monthsMatch[1] === "a" ? 1 : parseInt(monthsMatch[1])
+            const d = new Date(now)
+            d.setMonth(d.getMonth() - n)
+            return d
+        }
+
+        // "Mon, 8 Sep" style
+        const match = clean.match(/(\w+),\s*(\d+)\s*(\w+)/)
+        if (match) {
+            const [, , day, monthStr] = match
+            const months: Record<string, number> = {
+                Jan: 0, Feb: 1, Mar: 2, Apr: 3,
+                May: 4, Jun: 5, Jul: 6, Aug: 7,
+                Sep: 8, Oct: 9, Nov: 10, Dec: 11
+            }
+            const month = months[monthStr] ?? 0
+            const year = now.getFullYear()
+            return month > now.getMonth()
+                ? new Date(year - 1, month, Number(day))
+                : new Date(year, month, Number(day))
+        }
+
+        return new Date(0)
+    }
+
+    const sortByNewest = (listings: Listing[]) => {
+        if (!Array.isArray(listings) || listings.length === 0) return []
+
+        return [...listings].sort((a, b) => {
+            const dateA = parseFetchedDateListed(a.date_listed).getTime()
+            const dateB = parseFetchedDateListed(b.date_listed).getTime()
+
+            if (dateB !== dateA) return dateB - dateA
+
+            // fallback: use lastUpdated
+            return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+        })
     }
 
     // Apply filters (derived state)
@@ -120,7 +186,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
             );
         }
 
-        return filtered
+        return sortByNewest(filtered)
     }, [displayProperties, searchQuery, selectedBedrooms, selectedMonthBucket, selectedFrom])
 
     const totalPages = Math.max(1, Math.ceil(filteredListings.length / ITEMS_PER_PAGE))
@@ -161,6 +227,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
         setSelectedFrom(prev => (prev === source ? null : source));
     };
 
+    //scrape History
     const daysAgo = (n: number) => {
         let d = new Date();
         d.setDate(d.getDate() - Math.abs(n));
@@ -183,10 +250,22 @@ function MainPage({ properties }: { properties: Listing[] }) {
             ])
 
             const [tm, re] = await Promise.all([tmRes.json(), reRes.json()])
-            const merged = [...(tm?.listings ?? []), ...(re?.listings ?? [])] as Listing[]
+            let merged = [...(tm?.listings ?? []), ...(re?.listings ?? [])] as Listing[]
+
+            // If today's data is empty, silently fall back to yesterday
+            if (merged.length === 0 && daysAgo === 0) {
+                const [tmYest, reYest] = await Promise.all([
+                    fetch(`/api/listing?daysAgo=1`, { method: "GET" }),
+                    fetch(`/api/realestate-listing?daysAgo=1`, { method: "GET" }),
+                ])
+                const [tmY, reY] = await Promise.all([tmYest.json(), reYest.json()])
+                merged = [...(tmY?.listings ?? []), ...(reY?.listings ?? [])] as Listing[]
+                setSelectedHistoryDaysAgo(1)
+            } else {
+                setSelectedHistoryDaysAgo(daysAgo)
+            }
 
             setDisplayProperties(merged)
-            setSelectedHistoryDaysAgo(daysAgo)
             setCurrentPage(1)
             clearFilters()
         } finally {
