@@ -80,7 +80,8 @@ function MainPage({ properties }: { properties: Listing[] }) {
 
         const clean = str.replace(/^Listed\s*/i, "").trim()
         const now = new Date()
-
+        
+        if (/^now$/i.test(clean)) return new Date(8640000000000000)
         const hoursMatch = clean.match(/^(\d+)\s+hours?\s+ago$/i)
         if (hoursMatch) {
             const d = new Date(now)
