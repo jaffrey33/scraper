@@ -2,8 +2,8 @@ name: Daily TradeMe Scrape
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 8am NZT (UTC+12)
-  workflow_dispatch:       # allows manual trigger from GitHub UI
+    - cron: '0 18 * * *'  # 6am NZT (UTC+12)
+  workflow_dispatch:      
 
 jobs:
   scrape:

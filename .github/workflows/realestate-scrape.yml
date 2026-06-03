@@ -2,7 +2,7 @@ name: Daily RealeEstate Scrape
 
 on:
   schedule:
-    - cron: '0 0 * * *'  
+    - cron: '0 18 * * *'  # 6am NZT (UTC+12)
   workflow_dispatch:       
 
 jobs:
