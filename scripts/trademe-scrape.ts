@@ -184,8 +184,8 @@ async function scrapeTrademeListings(page: Page): Promise<Listing[]> {
         description: null,
         propertyType: null,
         scrapeFrom: 'trademe.co.nz',
-        scrapedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString()
+        scrapedAt: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(),
+        lastUpdated: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString()
       })
       continue
     }
@@ -231,8 +231,8 @@ async function scrapeTrademeListings(page: Page): Promise<Listing[]> {
         ...listingDetails,
         photos: listingDetails.photos || listing.photos,
         scrapeFrom: 'trademe.co.nz',
-        scrapedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString()
+        scrapedAt: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(),
+        lastUpdated: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString()
       } as Listing)
 
       await page.waitForTimeout(500)
@@ -243,8 +243,8 @@ async function scrapeTrademeListings(page: Page): Promise<Listing[]> {
         description: null,
         propertyType: null,
         scrapeFrom: 'trademe.co.nz',
-        scrapedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString()
+        scrapedAt: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(),
+        lastUpdated: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString()
       })
     }
   }
@@ -288,7 +288,7 @@ async function main() {
 
     // Store metadata about last scrape
     await db.collection('scrape_metadata').doc('last_run-trademe').set({
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(),
       listingsCount: listings.length,
       status: 'success'
     })
@@ -296,7 +296,7 @@ async function main() {
   } catch (error) {
     // Log error to Firestore
     await db.collection('scrape_metadata').doc('last_run-trademe').set({
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(),
       status: 'error',
       error: error instanceof Error ? error.message : 'Unknown error'
     })

@@ -179,7 +179,7 @@ async function scrapeRealEstateListings(page: Page): Promise<Listing[]> {
     const listing = uniqueListings[i]
 
     if (!listing.siteURL) {
-      detailedData.push({ ...listing, description: null, scrapedAt: new Date().toISOString(), lastUpdated: new Date().toISOString(), scrapeFrom: 'realestate.co.nz' })
+      detailedData.push({ ...listing, description: null, scrapedAt: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(), lastUpdated: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(), scrapeFrom: 'realestate.co.nz' })
       continue
     }
 
@@ -219,15 +219,15 @@ async function scrapeRealEstateListings(page: Page): Promise<Listing[]> {
         ...listing,
         description: listingDetails.description,
         photos: listingDetails.photos || listing.photos,
-        scrapedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
+        scrapedAt:new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(),
+        lastUpdated: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(),
         scrapeFrom: 'realestate.co.nz'
       })
 
       await page.waitForTimeout(500)
 
     } catch {
-      detailedData.push({ ...listing, description: null, scrapedAt: new Date().toISOString(), lastUpdated: new Date().toISOString(), scrapeFrom: 'realestate.co.nz' })
+      detailedData.push({ ...listing, description: null, scrapedAt: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(), lastUpdated: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(), scrapeFrom: 'realestate.co.nz' })
     }
   }
 
@@ -267,13 +267,13 @@ async function main() {
     await batch.commit()
 
     await db.collection('scrape_metadata').doc('last_run-realestate').set({
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(),
       listingsCount: listings.length,
       status: 'success'
     })
   } catch (error) {
     await db.collection('scrape_metadata').doc('last_run-realestate').set({
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(new Date().toLocaleString('en-US', { timeZone: 'Pacific/Auckland' })).toISOString(),
       status: 'error',
       error: error instanceof Error ? error.message : 'Unknown error'
     })
