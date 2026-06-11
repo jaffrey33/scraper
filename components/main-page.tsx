@@ -17,11 +17,12 @@ import {
     PaginationPrevious,
 } from "./ui/pagination"
 import Image from "next/image"
+import DataNumbers from "./data-numbers"
 
 
 type ScrapeFrom = 'trademe.co.nz' | 'realestate.co.nz'
 
-const ITEMS_PER_PAGE = 9
+const ITEMS_PER_PAGE = 5
 
 function MainPage({ properties }: { properties: Listing[] }) {
     const [displayProperties, setDisplayProperties] = useState<Listing[]>(properties)
@@ -80,7 +81,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
 
         const clean = str.replace(/^Listed\s*/i, "").trim()
         const now = new Date()
-        
+
         if (/^now$/i.test(clean)) return new Date(8640000000000000)
         const hoursMatch = clean.match(/^(\d+)\s+hours?\s+ago$/i)
         if (hoursMatch) {
@@ -273,6 +274,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
             setIsLoadingHistory(false)
         }
     }
+
     return (
         <div className="px-4 py-16 flex flex-col gap-8">
             <section className="flex justify-between items-center">
@@ -302,6 +304,14 @@ function MainPage({ properties }: { properties: Listing[] }) {
                 </DropdownMenu>
                 {/* <AddProperty /> */}
             </section>
+
+            { /* Data numbers */}
+            <DataNumbers
+                displayProperties={displayProperties}
+                isLoadingHistory={isLoadingHistory}
+                selectedHistoryDaysAgo={selectedHistoryDaysAgo}
+                daysAgo={daysAgo}
+            />
 
             {/* search */}
             <section>
