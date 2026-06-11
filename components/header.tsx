@@ -16,9 +16,9 @@ import Link from 'next/link'
 function Header() {
   const {logout} = useAuth()
   return (
-    <header className='p-4 bg-accent'>
+    <header className='py-4 bg-accent'>
       <div className='h-32' />
-      <nav className='container 2xl:w-1/2 mx-auto flex justify-between items-center'>
+      <nav className='container 2xl:w-1/2 px-4 mx-auto flex justify-between items-center'>
         <div className='flex items-center gap-1'>
           <h1 className='text-2xl font-bold'>Property Management System</h1>
         </div>
