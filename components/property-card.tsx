@@ -5,9 +5,9 @@ import {
     CardDescription,
     CardFooter,
     CardHeader,
-} from "@/components/ui/card"
+} from "@/components/ui/card"   
 import { Badge } from "./ui/badge"
-import { Bath, Bed, ChevronLeft, ChevronRight, House, Mail, Phone, SquareArrowOutUpRight, User } from "lucide-react"
+import { Bath, Bed, ChevronLeft, ChevronRight, Mail, Phone, SquareArrowOutUpRight, User } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { Listing } from "@/types/data-types"
