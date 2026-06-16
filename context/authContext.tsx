@@ -14,6 +14,8 @@ import React, { createContext, useContext, useEffect, useState } from "react"
 interface AuthContextType {
   user: User | null
   loading: boolean
+  successMsg: string | null
+  errorMsg: string | null
   login: (email: string, password: string) => Promise<User>
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
@@ -34,6 +36,8 @@ export const AuthContextProvider = ({
 }) => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   //   const { success, error } = useToast()
 
   useEffect(() => {
@@ -66,7 +70,7 @@ export const AuthContextProvider = ({
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      localStorage.setItem("loginTime", Date.now().toString()); // ✅ store as string
+      localStorage.setItem("loginTime", Date.now().toString()); // store as string
       return userCredential.user;
     } catch (err: unknown) {
       throw err;
@@ -86,16 +90,23 @@ export const AuthContextProvider = ({
 
   const resetPassword = async (email: string) => {
     try {
+      setLoading(true)
+      setErrorMsg(null)
+      setSuccessMsg(null)
+
       await sendPasswordResetEmail(auth, email)
-      //   success("Success! Please check your email for the reset request.")
-    } catch (err: unknown) {
-      //   error(getErrorMessage(firebaseError.code || 'Error sending reset password email. Please try again'))
-      throw err
+
+      setSuccessMsg("Check your email for the reset link.")
+    } catch (err: any) {
+      setErrorMsg("Failed to send reset email.")
+    } finally {
+      setLoading(false)
     }
   }
 
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, resetPassword, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, resetPassword, loading, successMsg, errorMsg }}>
       {children}
     </AuthContext.Provider>
   )
