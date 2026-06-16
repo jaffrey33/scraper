@@ -1,6 +1,7 @@
 import { Listing } from "@/types/data-types"
 import { useCallback, useMemo } from "react"
 import { Skeleton } from "./ui/skeleton"
+import { NumberTicker } from "./number-ticker"
 
 function DataNumbers({ displayProperties, isLoadingHistory, selectedHistoryDaysAgo, daysAgo }: {
     displayProperties: Listing[],
@@ -70,7 +71,9 @@ function DataNumbers({ displayProperties, isLoadingHistory, selectedHistoryDaysA
                     </> :
                     <>
                         <p className="text-neutral-500 uppercase text-sm">Total Listing</p>
-                        <h2 className="text-3xl font-bold ">{displayProperties.length}</h2>
+                        <h2 className="text-3xl font-bold ">
+                            <NumberTicker value={displayProperties.length} />
+                        </h2>
                         <p className="text-xs text-neutral-500">{selectedFromLength('trademe.co.nz')}  Trademe · {selectedFromLength('realestate.co.nz')} RealEstate</p>
 
                     </>
@@ -85,7 +88,12 @@ function DataNumbers({ displayProperties, isLoadingHistory, selectedHistoryDaysA
                     </> :
                     <>
                         <p className="text-neutral-500 uppercase text-sm">Average Rent / Week</p>
-                        <h2 className="text-3xl font-bold">${averageRent.toFixed(2)}</h2>
+
+                        <h2 className="text-3xl font-bold">
+                            $<NumberTicker
+                                decimalPlaces={2}
+                                value={averageRent} />
+                        </h2>
                         <p className="text-xs text-neutral-500">Lowest rent ${lowestRent}</p>
 
                     </>
