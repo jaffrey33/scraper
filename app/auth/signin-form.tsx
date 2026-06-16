@@ -46,12 +46,12 @@ function SignIn() {
                     <div>
                         <Label>Password</Label>
                         <Input name="password" value={password} onChange={e => setPassword(e.target.value)} type="password" />
-                        <div className="mt-1 flex justify-between">
-                            <div className="flex gap-1">
+                        <div className="mt-1 flex justify-between items-end">
+                            <div className="flex items-end gap-1">
                                 <Checkbox />
                                 <Label>Remember me?</Label>
                             </div>
-                            <Link href="#" className="text-sm">Forgot password?</Link>
+                            <Link href="/reset-password" className="text-sm">Forgot password?</Link>
                         </div>
 
                     </div>
