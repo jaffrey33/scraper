@@ -5,7 +5,7 @@ import {
     CardDescription,
     CardFooter,
     CardHeader,
-} from "@/components/ui/card"   
+} from "@/components/ui/card"
 import { Badge } from "./ui/badge"
 import { Bath, Bed, ChevronLeft, ChevronRight, Mail, Phone, SquareArrowOutUpRight, User } from "lucide-react"
 import Image from "next/image"
@@ -49,15 +49,15 @@ function PropertyCard({ property }: { property: Listing }) {
                         alt="property-logo"
                         className="absolute bottom-2 left-2 w-32 z-20 "
                     />
-                 <Image
-    src={imgSrc}
-    fill
-    sizes="(min-width: 1024px) 33vw, (min-width: 768px) and (max-width: 1023px) calc(50vw - 32px), calc(100vw - 24px)"
-    loading="eager"
-    alt='property-photo'
-    className="w-full h-full object-cover"
-    onError={() => setImgSrc('https://placehold.net/building.svg')}
-/>
+                    <Image
+                        src={imgSrc}
+                        fill
+                        sizes="(min-width: 1024px) 33vw, (min-width: 768px) and (max-width: 1023px) calc(50vw - 32px), calc(100vw - 24px)"
+                        loading="eager"
+                        alt='property-photo'
+                        className="w-full h-full object-cover"
+                        onError={() => setImgSrc('https://placehold.net/building.svg')}
+                    />
                 </div>
                 {property?.photos != null && property.photos.length > 1 && (
                     <>
