@@ -18,6 +18,7 @@ import {
 } from "./ui/pagination"
 import Image from "next/image"
 import DataNumbers from "./data-numbers"
+import { daysAgo, getRegionFromAddress, MONTH_BUCKETS, parseDateListed, REGION_ORDER, sortByNewest } from "@/lib/utils"
 
 
 type ScrapeFrom = 'trademe.co.nz' | 'realestate.co.nz'
@@ -29,7 +30,8 @@ function MainPage({ properties }: { properties: Listing[] }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedBedrooms, setSelectedBedrooms] = useState<number[]>([])
     const [selectedMonthBucket, setSelectedMonthBucket] = useState<number | null>(null)
-    const [selectedFrom, setSelectedFrom] = useState<ScrapeFrom | null>(null)
+    const [selectedFrom, setSelectedFrom] = useState<ScrapeFrom | null>('realestate.co.nz')
+    const [selectedRegions, setSelectedRegions] = useState<string[]>(['Ruapehu'])
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedHistoryDaysAgo, setSelectedHistoryDaysAgo] = useState<number>(0)
     const [isLoadingHistory, setIsLoadingHistory] = useState(false)
@@ -38,120 +40,23 @@ function MainPage({ properties }: { properties: Listing[] }) {
     }
 
     // Get unique bedroom counts
-
     const bedroomOptions = Array.from(
         new Set(displayProperties.map(l => l.bedrooms).filter(b => b !== null))
     ).sort((a, b) => (a || 0) - (b || 0))
 
-    const MONTH_BUCKETS = [3, 6, 12, 24]
 
-    const parseDateListed = (raw: string): Date | null => {
-        const now = new Date()
-        const s = raw.replace(/^Listed\s*/i, '').trim()
+    // get regions 
 
-        if (/^today$/i.test(s)) return now
-        if (/^yesterday$/i.test(s)) { const d = new Date(now); d.setDate(d.getDate() - 1); return d }
-
-        const daysMatch = s.match(/^(\d+)\s+days?\s+ago$/i)
-        if (daysMatch) { const d = new Date(now); d.setDate(d.getDate() - parseInt(daysMatch[1])); return d }
-
-        const weeksMatch = s.match(/^(\d+|a)\s+weeks?\s+ago$/i)
-        if (weeksMatch) { const n = weeksMatch[1] === 'a' ? 1 : parseInt(weeksMatch[1]); const d = new Date(now); d.setDate(d.getDate() - n * 7); return d }
-
-        const monthsMatch = s.match(/^(\d+|a)\s+months?\s+ago$/i)
-        if (monthsMatch) { const n = monthsMatch[1] === 'a' ? 1 : parseInt(monthsMatch[1]); const d = new Date(now); d.setMonth(d.getMonth() - n); return d }
-
-        // "Mon, 8 Sep" or "Fri, 27 Jun" — no year, infer it
-        const shortDate = s.match(/^\w+,\s+\d+\s+\w+$/)
-        if (shortDate) {
-            const year = now.getFullYear()
-            const parsed = new Date(`${s} ${year}`)
-            if (!isNaN(parsed.getTime())) {
-                // If parsed date is in the future, it belongs to prior year
-                return parsed > now ? new Date(`${s} ${year - 1}`) : parsed
-            }
-        }
-
-        const d = new Date(s)
-        return isNaN(d.getTime()) ? null : d
-    }
-
-    const parseFetchedDateListed = (str: string | null): Date => {
-        if (!str) return new Date(0)
-
-        const clean = str.replace(/^Listed\s*/i, "").trim()
-        const now = new Date()
-
-        if (/^now$/i.test(clean)) return new Date(8640000000000000)
-        const hoursMatch = clean.match(/^(\d+)\s+hours?\s+ago$/i)
-        if (hoursMatch) {
-            const d = new Date(now)
-            d.setHours(d.getHours() - parseInt(hoursMatch[1]))
-            return d
-        }
-        if (/^today$/i.test(clean)) return new Date(8640000000000000)
-
-        if (/^yesterday$/i.test(clean)) {
-            const d = new Date(now)
-            d.setDate(d.getDate() - 1)
-            return d
-        }
-
-        const daysMatch = clean.match(/^(\d+)\s+days?\s+ago$/i)
-        if (daysMatch) {
-            const d = new Date(now)
-            d.setDate(d.getDate() - parseInt(daysMatch[1]))
-            return d
-        }
-
-        const weeksMatch = clean.match(/^(a|\d+)\s+weeks?\s+ago$/i)
-        if (weeksMatch) {
-            const n = weeksMatch[1] === "a" ? 1 : parseInt(weeksMatch[1])
-            const d = new Date(now)
-            d.setDate(d.getDate() - n * 7)
-            return d
-        }
-
-        const monthsMatch = clean.match(/^(a|\d+)\s+months?\s+ago$/i)
-        if (monthsMatch) {
-            const n = monthsMatch[1] === "a" ? 1 : parseInt(monthsMatch[1])
-            const d = new Date(now)
-            d.setMonth(d.getMonth() - n)
-            return d
-        }
-
-        // "Mon, 8 Sep" style
-        const match = clean.match(/(\w+),\s*(\d+)\s*(\w+)/)
-        if (match) {
-            const [, , day, monthStr] = match
-            const months: Record<string, number> = {
-                Jan: 0, Feb: 1, Mar: 2, Apr: 3,
-                May: 4, Jun: 5, Jul: 6, Aug: 7,
-                Sep: 8, Oct: 9, Nov: 10, Dec: 11
-            }
-            const month = months[monthStr] ?? 0
-            const year = now.getFullYear()
-            return month > now.getMonth()
-                ? new Date(year - 1, month, Number(day))
-                : new Date(year, month, Number(day))
-        }
-
-        return new Date(0)
-    }
-
-    const sortByNewest = (listings: Listing[]) => {
-        if (!Array.isArray(listings) || listings.length === 0) return []
-
-        return [...listings].sort((a, b) => {
-            const dateA = parseFetchedDateListed(a.date_listed).getTime()
-            const dateB = parseFetchedDateListed(b.date_listed).getTime()
-
-            if (dateB !== dateA) return dateB - dateA
-
-            // fallback: use lastUpdated
-            return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
-        })
-    }
+    const regionOptions = Array.from(
+        new Set(displayProperties.map(l => getRegionFromAddress(l.address)))
+    ).sort((a, b) => {
+        const ai = REGION_ORDER.indexOf(a)
+        const bi = REGION_ORDER.indexOf(b)
+        if (ai !== -1 && bi !== -1) return ai - bi
+        if (ai !== -1) return -1
+        if (bi !== -1) return 1
+        return a.localeCompare(b)
+    })
 
     // Apply filters (derived state)
     const filteredListings = useMemo(() => {
@@ -188,15 +93,26 @@ function MainPage({ properties }: { properties: Listing[] }) {
             );
         }
 
-        return sortByNewest(filtered)
-    }, [displayProperties, searchQuery, selectedBedrooms, selectedMonthBucket, selectedFrom])
+        // Region filter
+        if (selectedRegions.length > 0) {
+            filtered = filtered.filter(listing =>
+                selectedRegions.includes(getRegionFromAddress(listing.address))
+            )
+        }
 
+        return sortByNewest(filtered)
+    }, [displayProperties, searchQuery, selectedBedrooms, selectedMonthBucket, selectedFrom, selectedRegions])
+
+    // Pagination logic
     const totalPages = Math.max(1, Math.ceil(filteredListings.length / ITEMS_PER_PAGE))
+
+    // Update currentPage if it exceeds totalPages
     const paginatedListings = useMemo(() => {
         const start = (currentPage - 1) * ITEMS_PER_PAGE
         return filteredListings.slice(start, start + ITEMS_PER_PAGE)
     }, [filteredListings, currentPage])
 
+    // Pagination logic
     const pageNumbers = useMemo(() => {
         if (totalPages <= 7) {
             return Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -212,7 +128,7 @@ function MainPage({ properties }: { properties: Listing[] }) {
         return pages
     }, [currentPage, totalPages])
 
-
+    // Toggle bedroom filter
     const toggleBedroom = (bedroom: number) => {
         setSelectedBedrooms(prev =>
             prev.includes(bedroom)
@@ -221,26 +137,32 @@ function MainPage({ properties }: { properties: Listing[] }) {
         )
     }
 
+    // Toggle month bucket filter
     const toggleMonthBucket = (months: number) => {
         setSelectedMonthBucket(prev => (prev === months ? null : months))
     }
 
+    // Toggle listing from filter
     const toggleFrom = (source: ScrapeFrom) => {
         setSelectedFrom(prev => (prev === source ? null : source));
     };
 
-    //scrape History
-    const daysAgo = (n: number) => {
-        let d = new Date();
-        d.setDate(d.getDate() - Math.abs(n));
-        return d;
-    };
+    // Toggle region filter
+    const toggleRegion = (region: string) => {
+        setSelectedRegions(prev =>
+            prev.includes(region)
+                ? prev.filter(r => r !== region)
+                : [...prev, region]
+        )
+    }
 
+    // Clear all filters
     const clearFilters = () => {
         setSearchQuery('')
         setSelectedBedrooms([])
         setSelectedMonthBucket(null)
         setSelectedFrom(null)
+        setSelectedRegions([])
     }
 
     const fetchHistory = async (daysAgo: number) => {
@@ -333,7 +255,26 @@ function MainPage({ properties }: { properties: Listing[] }) {
 
                 <div className="flex items-center gap-2 mt-4">
                     <div className="gap-2 flex items-center flex-wrap">
-
+                        {/* Region Filter */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant='outline' className="rounded-full">
+                                    Region {selectedRegions.length > 0 && `(${selectedRegions.length})`}
+                                    <ChevronDown className="ml-1 h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                {regionOptions.map((region) => (
+                                    <DropdownMenuCheckboxItem
+                                        key={region}
+                                        checked={selectedRegions.includes(region)}
+                                        onCheckedChange={() => toggleRegion(region)}
+                                    >
+                                        {region}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         {/* Bedrooms Filter */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -401,10 +342,12 @@ function MainPage({ properties }: { properties: Listing[] }) {
 
                             </DropdownMenuContent>
                         </DropdownMenu>
+
+
                     </div>
 
                     {/* Clear Filters */}
-                    {(searchQuery || selectedBedrooms.length > 0 || selectedMonthBucket !== null || selectedFrom) && (
+                    {(searchQuery || selectedBedrooms.length > 0 || selectedMonthBucket !== null || selectedFrom || selectedRegions.length > 0) && (
                         <Button variant="ghost" onClick={clearFilters} className="text-sm ml-auto">
                             Clear all
                         </Button>
@@ -413,11 +356,28 @@ function MainPage({ properties }: { properties: Listing[] }) {
 
                 {/* Results count */}
                 <div className="mt-4 text-sm text-muted-foreground flex justify-between">
-                    {filteredListings.length === 0
-                        ? "Showing 0 of 0 listings"
-                        : `Showing ${(currentPage - 1) * ITEMS_PER_PAGE + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, filteredListings.length)} of ${filteredListings.length} listings`}
-
+                    <div className="flex items-center gap-2">
+                        {filteredListings.length === 0
+                            ? "Showing 0 of 0 listings"
+                            : `Showing ${(currentPage - 1) * ITEMS_PER_PAGE + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, filteredListings.length)} of ${filteredListings.length} listings`}
+                        <div className="flex flex-wrap items-center gap-0.5">
+                            {selectedRegions.slice(0, 2).map((region) => (
+                                <span
+                                    key={region}
+                                    className="text-xs bg-neutral-100 text-neutral-600 px-2 py-1  rounded-full"
+                                >
+                                    {region}
+                                </span>
+                            ))}
+                            {selectedRegions.length > 2 && (
+                                <span className="text-xs text-neutral-400 px-2 py-1">
+                                    +{selectedRegions.length - 2} more
+                                </span>
+                            )}
+                        </div>
+                    </div>
                     <p>{pageNumbers.length > 1 && `Page ${currentPage} of ${totalPages}`}</p>
+
                 </div>
             </section>
 
