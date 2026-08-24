@@ -10,12 +10,22 @@ export function cn(...inputs: ClassValue[]) {
 export const MONTH_BUCKETS = [3, 6, 12, 24]
 
 export const REGION_ORDER = [
-  'Northland', 'Auckland', 'The Coromandel', 'Bay of Plenty', 'Rotorua',
-  'Gisborne & Eastland', "Hawke's Bay", 'Taupo', 'Ruapehu',
-  'Waikato & Waitomo', 'Taranaki', 'Whanganui', 'Manawatu',
-  'Wellington', 'Wairarapa',
+    'Auckland',
+    'Bay of Plenty',
+    'Gisborne & Eastland',
+    "Hawke's Bay",
+    'Manawatu',
+    'Northland',
+    'Ruapehu',
+    'Rotorua',
+    'Taranaki',
+    'Taupo',
+    'The Coromandel',
+    'Waikato & Waitomo',
+    'Wairarapa',
+    'Wellington',
+    'Whanganui',
 ]
-
 // regions
 export const TOWN_TO_REGION: Record<string, string> = {
   // 1. Northland
