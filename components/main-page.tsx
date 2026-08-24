@@ -46,18 +46,8 @@ function MainPage({ properties }: { properties: Listing[] }) {
 
 
     // get regions 
-
-    const regionOptions = Array.from(
-        new Set(displayProperties.map(l => getRegionFromAddress(l.address)))
-    ).sort((a, b) => {
-        const ai = REGION_ORDER.indexOf(a)
-        const bi = REGION_ORDER.indexOf(b)
-        if (ai !== -1 && bi !== -1) return ai - bi
-        if (ai !== -1) return -1
-        if (bi !== -1) return 1
-        return a.localeCompare(b)
-    })
-
+    const regionOptions = REGION_ORDER
+    
     // Apply filters (derived state)
     const filteredListings = useMemo(() => {
         let filtered = [...displayProperties]
